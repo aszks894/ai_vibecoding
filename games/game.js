@@ -2,6 +2,7 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const fishCountEl = document.getElementById('fishCount');
 const levelLabelEl = document.getElementById('levelLabel');
+const levelTimerEl = document.getElementById('levelTimer');
 const achievementCountEl = document.getElementById('achievementCount');
 const catSelectEl = document.getElementById('catSelect');
 const startGameButton = document.getElementById('startGame');
@@ -42,11 +43,14 @@ const achievementCards = new Map(
 const achievementStorageKey = 'cat-platformer-achievements';
 const unlockedAchievements = loadAchievements();
 let gameStartedAt = 0;
+let levelStartedAt = 0;
 let gameStarted = false;
 let knockouts = 0;
 let selectedCat = 'white';
 let levelIndex = 0;
 let totalFishCollected = 0;
+const speedLevelsCompleted = new Set();
+let levelNoticeTimeout = null;
 
 const catCoats = {
   white: { fur: '#f2f2f2', innerEar: '#686868', stripes: false },
@@ -126,7 +130,8 @@ const firstLevel = {
   spikes,
   saws,
   fish,
-  door: { ...door }
+  door: { ...door },
+  start: { x: 84, y: 360 }
 };
 const nextLevels = [
   {
@@ -219,15 +224,18 @@ function unlockAchievement(id) {
 }
 
 function renderAchievements() {
-  const collected = fish.filter((item) => item.collected).length;
-  const elapsedSeconds = gameStarted ? (performance.now() - gameStartedAt) / 1000 : 0;
+  const secondsLeft = gameStarted
+    ? Math.max(0, Math.ceil(45 - (performance.now() - levelStartedAt) / 1000))
+    : 45;
   const progress = {
     'fish-fan': `${totalFishCollected} / 15`,
     'clean-paws': `${knockouts} knockouts`,
-    'speed-paws': `${Math.max(0, Math.ceil(45 - elapsedSeconds))}s left`,
+    'speed-paws': `${speedLevelsCompleted.size} / 3 stages`,
     'nine-lives': `${Math.min(knockouts, 3)} / 3`
   };
 
+  levelTimerEl.textContent = secondsLeft > 0 ? `${secondsLeft}s` : 'TIME UP';
+  levelTimerEl.classList.toggle('timer-expired', secondsLeft === 0);
   for (const id of achievementIds) {
     const card = achievementCards.get(id);
     if (!card) continue;
@@ -240,9 +248,7 @@ function renderAchievements() {
 }
 
 function checkFinishAchievements() {
-  const elapsedSeconds = (performance.now() - gameStartedAt) / 1000;
   if (knockouts === 0) unlockAchievement('clean-paws');
-  if (elapsedSeconds < 45) unlockAchievement('speed-paws');
   if (knockouts >= 3) unlockAchievement('nine-lives');
 }
 
@@ -259,6 +265,7 @@ function startGame() {
   if (gameStarted) return;
   gameStarted = true;
   gameStartedAt = performance.now();
+  levelStartedAt = gameStartedAt;
   catSelectEl.hidden = true;
   renderAchievements();
 }
@@ -390,7 +397,7 @@ async function toggleChiptune() {
 }
 
 function resetPlayer() {
-  const start = levelIndex === 0 ? { x: 84, y: 360 } : nextLevels[levelIndex - 1].start;
+  const start = levelIndex === 0 ? firstLevel.start : nextLevels[levelIndex - 1].start;
   player.x = start.x;
   player.y = start.y;
   player.vx = 0;
@@ -426,6 +433,7 @@ function loadLevel(index) {
   }
 
   resetPlayer();
+  levelStartedAt = performance.now();
   renderAchievements();
 }
 
@@ -508,6 +516,17 @@ function updatePlayer() {
 
 function respawnPlayer() {
   knockouts += 1;
+  const levelData = levelIndex === 0 ? firstLevel : nextLevels[levelIndex - 1];
+  saws = levelData.saws.map((saw) => ({ ...saw }));
+  cameraX = 0;
+  levelStartedAt = performance.now();
+  if (levelNoticeTimeout !== null) window.clearTimeout(levelNoticeTimeout);
+  levelLabelEl.textContent = `KNOCKOUT ${knockouts} - RESTARTING LEVEL ${levelIndex + 1}`;
+  levelNoticeTimeout = window.setTimeout(() => {
+    const currentLevel = levelIndex === 0 ? 'MOONLIT ROOFTOPS' : nextLevels[levelIndex - 1].name;
+    levelLabelEl.textContent = `LEVEL ${levelIndex + 1} / 3 - ${currentLevel}`;
+    levelNoticeTimeout = null;
+  }, 1100);
   renderAchievements();
   resetPlayer();
   for (let i = 0; i < 28; i += 1) spawnSpark(player.x + player.w / 2, player.y + player.h / 2);
@@ -532,6 +551,8 @@ function checkCollectibles() {
 }
 
 function checkSpikesAndSaws() {
+  if (player.invulnerable > 0) return;
+
   for (const spike of spikes) {
     if (rectsOverlap(playerRect(), spike)) {
       respawnPlayer();
@@ -644,6 +665,7 @@ function showWinScreen(hasNextLevel) {
   replayButton.addEventListener('click', () => {
     totalFishCollected = 0;
     knockouts = 0;
+    speedLevelsCompleted.clear();
     gameStartedAt = performance.now();
     loadLevel(0);
     overlay.remove();
@@ -662,6 +684,11 @@ function checkWin() {
       player.vx = 0;
       player.vy = 0;
       const hasNextLevel = levelIndex < 2;
+      if ((performance.now() - levelStartedAt) / 1000 < 45) {
+        speedLevelsCompleted.add(levelIndex);
+        if (speedLevelsCompleted.size === 3) unlockAchievement('speed-paws');
+      }
+      renderAchievements();
       if (!hasNextLevel) checkFinishAchievements();
       showWinScreen(hasNextLevel);
       return true;
@@ -911,6 +938,7 @@ function update() {
 
   const targetCamera = Math.max(0, Math.min(player.x - canvas.width * 0.42, world.width - canvas.width));
   cameraX += (targetCamera - cameraX) * 0.12;
+  if (player.invulnerable > 0) player.invulnerable -= 1;
 }
 
 function draw() {

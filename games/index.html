@@ -10,10 +10,10 @@
     <main class="game-shell">
       <header class="hud">
         <div><span class="label">CAT</span> PLATFORMER</div>
-        <div class="meta"><span id="levelLabel">LEVEL 1 / 3 - MOONLIT ROOFTOPS</span> | <span id="fishCount">0</span> / 5 fish</div>
+        <div class="meta"><span id="levelLabel">LEVEL 1 / 3 - MOONLIT ROOFTOPS</span> | <span id="levelTimer">45s</span> | <span id="fishCount">0</span> / 5 fish</div>
       </header>
       <canvas id="game" width="960" height="540" aria-label="Cat platformer game"></canvas>
-      <div class="help">Move: A/D or ←/→ | Jump: W/↑/Space | Collect fish, then reach the door.</div>
+      <div class="help">Move: A/D or ←/→ | Jump: W/↑/Space | Collect all fish, then reach the door.</div>
       <section class="music-player" aria-label="Game music">
         <div class="music-title">GAME MUSIC</div>
         <button class="music-file-button" id="chiptuneToggle" type="button" aria-pressed="false">PLAY CHIPTUNE</button>
@@ -45,8 +45,8 @@
           </li>
           <li class="achievement" data-achievement="speed-paws">
             <span class="achievement-mark" aria-hidden="true">[ ]</span>
-            <span class="achievement-copy"><strong>SPEED PAWS</strong><small>Finish in under 45 seconds</small></span>
-            <span class="achievement-progress">45s left</span>
+            <span class="achievement-copy"><strong>SPEED PAWS</strong><small>Finish each level in under 45 seconds</small></span>
+            <span class="achievement-progress">0 / 3 stages</span>
           </li>
           <li class="achievement" data-achievement="nine-lives">
             <span class="achievement-mark" aria-hidden="true">[ ]</span>
