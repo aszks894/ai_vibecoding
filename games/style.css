@@ -475,6 +475,15 @@ body {
   opacity: 0.9;
 }
 
+.win-warning {
+  max-width: 34ch;
+  color: #bdbdbd;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  text-align: center;
+}
+
 .replay-button {
   margin-top: 8px;
 }

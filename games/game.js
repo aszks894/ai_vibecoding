@@ -209,6 +209,17 @@ function saveAchievements() {
   }
 }
 
+function clearAchievements() {
+  unlockedAchievements.clear();
+  speedLevelsCompleted.clear();
+  try {
+    localStorage.removeItem(achievementStorageKey);
+  } catch (error) {
+    console.warn('Could not clear saved achievements:', error);
+  }
+  renderAchievements();
+}
+
 function unlockAchievement(id) {
   if (unlockedAchievements.has(id)) return;
   unlockedAchievements.add(id);
@@ -644,6 +655,12 @@ function showWinScreen(hasNextLevel) {
   subtitle.textContent = hasNextLevel ? 'GET READY FOR THE NEXT STAGE' : 'ALL THREE LEVELS CLEARED';
   panel.appendChild(title);
   panel.appendChild(subtitle);
+  if (!hasNextLevel) {
+    const warning = document.createElement('div');
+    warning.className = 'win-warning';
+    warning.textContent = 'WARNING: PLAY AGAIN WILL RESET ALL ACHIEVEMENTS';
+    panel.appendChild(warning);
+  }
 
   overlay.appendChild(flash);
   overlay.appendChild(confettiLayer);
@@ -663,9 +680,9 @@ function showWinScreen(hasNextLevel) {
   replayButton.type = 'button';
   replayButton.textContent = 'PLAY AGAIN';
   replayButton.addEventListener('click', () => {
+    clearAchievements();
     totalFishCollected = 0;
     knockouts = 0;
-    speedLevelsCompleted.clear();
     gameStartedAt = performance.now();
     loadLevel(0);
     overlay.remove();
