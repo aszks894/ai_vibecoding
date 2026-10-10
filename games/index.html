@@ -29,33 +29,60 @@
       </section>
       <section class="achievements" aria-labelledby="achievementsTitle">
         <div class="achievements-heading">
-          <h2 id="achievementsTitle">MISSIONS</h2>
-          <span id="achievementCount">0 / 4 UNLOCKED</span>
+          <h2 id="achievementsTitle">DAILY MISSIONS</h2>
+          <div class="achievement-actions">
+            <span id="achievementCount">0 / 4 UNLOCKED</span>
+            <button id="resetAchievements" type="button">RESET TODAY</button>
+          </div>
         </div>
-        <ul class="achievement-list">
-          <li class="achievement" data-achievement="fish-fan">
-            <span class="achievement-mark" aria-hidden="true">[ ]</span>
-            <span class="achievement-copy"><strong>FISH FAN</strong><small>Collect every fish</small></span>
-            <span class="achievement-progress">0 / 5</span>
-          </li>
-          <li class="achievement" data-achievement="clean-paws">
-            <span class="achievement-mark" aria-hidden="true">[ ]</span>
-            <span class="achievement-copy"><strong>CLEAN PAWS</strong><small>Reach the door with no knockouts</small></span>
-            <span class="achievement-progress">0 knockouts</span>
-          </li>
-          <li class="achievement" data-achievement="speed-paws">
-            <span class="achievement-mark" aria-hidden="true">[ ]</span>
-            <span class="achievement-copy"><strong>SPEED PAWS</strong><small>Finish each level in under 45 seconds</small></span>
-            <span class="achievement-progress">0 / 3 stages</span>
-          </li>
-          <li class="achievement" data-achievement="nine-lives">
-            <span class="achievement-mark" aria-hidden="true">[ ]</span>
-            <span class="achievement-copy"><strong>NINE LIVES</strong><small>Finish after 3 knockouts</small></span>
-            <span class="achievement-progress">0 / 3</span>
-          </li>
-        </ul>
+        <ul class="achievement-list" id="achievementList"></ul>
+        <p class="next-missions" id="nextMissions" hidden></p>
+      </section>
+      <section class="bug-report" aria-labelledby="bugReportTitle">
+        <div>
+          <h2 id="bugReportTitle">SPOT A BUG?</h2>
+          <p>TELL US WHAT HAPPENED SO WE CAN FIX IT.</p>
+        </div>
+        <button class="bug-report-link" id="openBugReport" type="button">REPORT A BUG</button>
       </section>
     </main>
+    <dialog class="bug-report-dialog" id="bugReportDialog" aria-labelledby="bugReportDialogTitle">
+      <form class="bug-report-form" id="bugReportForm">
+        <div class="bug-report-dialog-heading">
+          <div>
+            <p class="select-kicker">CAT PLATFORMER</p>
+            <h2 id="bugReportDialogTitle">TELL US WHAT HAPPENED</h2>
+          </div>
+          <button class="bug-report-close" id="closeBugReport" type="button" aria-label="Close bug report">×</button>
+        </div>
+        <p class="bug-report-intro">Your report is emailed to the game team. Add your email only if you’d like a reply; don’t include other private information.</p>
+        <label class="bug-report-field" for="bugCategory">WHAT KIND OF BUG?</label>
+        <select id="bugCategory" name="category" required>
+          <option value="" selected disabled>Choose a category</option>
+          <option>Movement or jumping</option>
+          <option>Platforms or hazards</option>
+          <option>Fish or daily missions</option>
+          <option>Level or door</option>
+          <option>Sound or music</option>
+          <option>Visual glitch</option>
+          <option>Other</option>
+        </select>
+        <label class="bug-report-field" id="bugOtherLabel" for="bugOther" hidden>WHAT IS IT ABOUT?</label>
+        <input id="bugOther" name="other_category" type="text" maxlength="80" placeholder="Tell us what kind of bug" hidden />
+        <label class="bug-report-field" for="bugDescription">WHAT HAPPENED?</label>
+        <textarea id="bugDescription" name="description" rows="4" maxlength="2000" placeholder="Describe what went wrong..." required></textarea>
+        <label class="bug-report-field" for="bugSteps">HOW CAN WE RECREATE IT? <span>(OPTIONAL)</span></label>
+        <textarea id="bugSteps" name="steps" rows="3" maxlength="1500" placeholder="What were you doing right before it happened?"></textarea>
+        <label class="bug-report-field" for="bugEmail">EMAIL <span>(OPTIONAL, IF YOU'D LIKE A REPLY)</span></label>
+        <input id="bugEmail" name="_replyto" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" />
+        <input name="_subject" type="hidden" value="Cat Platformer bug report" />
+        <p class="bug-report-status" id="bugReportStatus" role="status" aria-live="polite"></p>
+        <div class="bug-report-actions">
+          <button class="bug-report-cancel" id="cancelBugReport" type="button">CANCEL</button>
+          <button class="bug-report-submit" id="submitBugReport" type="submit">SEND REPORT</button>
+        </div>
+      </form>
+    </dialog>
     <section class="cat-select" id="catSelect" role="dialog" aria-modal="true" aria-labelledby="catSelectTitle">
       <div class="select-panel">
         <p class="select-kicker">PLAYER ONE</p>

@@ -4,6 +4,16 @@ const fishCountEl = document.getElementById('fishCount');
 const levelLabelEl = document.getElementById('levelLabel');
 const levelTimerEl = document.getElementById('levelTimer');
 const achievementCountEl = document.getElementById('achievementCount');
+const resetAchievementsButton = document.getElementById('resetAchievements');
+const openBugReportButton = document.getElementById('openBugReport');
+const bugReportDialog = document.getElementById('bugReportDialog');
+const bugReportForm = document.getElementById('bugReportForm');
+const bugCategorySelect = document.getElementById('bugCategory');
+const bugOtherInput = document.getElementById('bugOther');
+const bugOtherLabel = document.getElementById('bugOtherLabel');
+const bugReportStatus = document.getElementById('bugReportStatus');
+const submitBugReportButton = document.getElementById('submitBugReport');
+const bugReportEndpoint = 'https://formsubmit.co/ajax/support.catdash@gmail.com';
 const catSelectEl = document.getElementById('catSelect');
 const startGameButton = document.getElementById('startGame');
 const catOptionButtons = [...document.querySelectorAll('.cat-option')];
@@ -36,12 +46,55 @@ const bassPattern = [
 ];
 let noiseBuffer = null;
 
-const achievementIds = ['fish-fan', 'clean-paws', 'speed-paws', 'nine-lives'];
-const achievementCards = new Map(
-  achievementIds.map((id) => [id, document.querySelector(`[data-achievement="${id}"]`)])
-);
-const achievementStorageKey = 'cat-platformer-achievements';
-const unlockedAchievements = loadAchievements();
+const achievementListEl = document.getElementById('achievementList');
+const nextMissionsEl = document.getElementById('nextMissions');
+const achievementStorageKey = 'cat-platformer-daily-missions-v1';
+const missionCatalog = [
+  ...[1, 3, 5, 8, 10, 15, 20, 25].map((target) => ({
+    id: `fish-${target}`, title: `FISH HUNTER ${target}`, description: `Collect ${target} fish today.`,
+    metric: 'fish', target
+  })),
+  ...[1, 5, 10, 20, 30, 50, 75, 100].map((target) => ({
+    id: `jumps-${target}`, title: `LEAP COUNT ${target}`, description: `Jump ${target} times today.`,
+    metric: 'jumps', target
+  })),
+  ...[1, 2, 3, 4, 6, 8].map((target) => ({
+    id: `levels-${target}`, title: `STAGE CLEAR ${target}`, description: `Clear ${target} levels today.`,
+    metric: 'levels', target
+  })),
+  ...[1, 2, 3, 4, 5, 6].map((target) => ({
+    id: `speed-${target}`, title: `SPEED RUN ${target}`, description: `Beat ${target} level timers today.`,
+    metric: 'fastLevels', target
+  })),
+  ...[1, 2, 3, 4, 5, 6].map((target) => ({
+    id: `clean-${target}`, title: `CLEAN RUN ${target}`, description: `Clear ${target} levels without a knockout in that level.`,
+    metric: 'cleanLevels', target
+  })),
+  ...[1, 2, 3, 4, 5, 8].map((target) => ({
+    id: `knockouts-${target}`, title: `NINE LIVES ${target}`, description: `Take ${target} knockouts today.`,
+    metric: 'knockouts', target
+  })),
+  ...[60, 120, 180, 300, 600, 900, 1200, 1800].map((target) => ({
+    id: `playtime-${target}`, title: `ARCADE TIME ${Math.floor(target / 60)}M`,
+    description: `Play for ${Math.floor(target / 60)} minutes today.`,
+    metric: 'playSeconds', target
+  }))
+];
+let missionShuffleSeed = 0xC0FFEE;
+for (let i = missionCatalog.length - 1; i > 0; i -= 1) {
+  missionShuffleSeed = (Math.imul(missionShuffleSeed, 1664525) + 1013904223) >>> 0;
+  const swapIndex = missionShuffleSeed % (i + 1);
+  [missionCatalog[i], missionCatalog[swapIndex]] = [missionCatalog[swapIndex], missionCatalog[i]];
+}
+const dailyMissionSets = [];
+let missionOffset = 0;
+for (let day = 0; day < 13; day += 1) {
+  const count = day < 9 ? 4 : 3;
+  dailyMissionSets.push(missionCatalog.slice(missionOffset, missionOffset + count));
+  missionOffset += count;
+}
+const missionMetrics = ['fish', 'jumps', 'levels', 'fastLevels', 'cleanLevels', 'knockouts', 'playSeconds'];
+let dailyMissionState = loadDailyMissionState();
 let gameStartedAt = 0;
 let levelStartedAt = 0;
 let gameStarted = false;
@@ -49,7 +102,8 @@ let knockouts = 0;
 let selectedCat = 'white';
 let levelIndex = 0;
 let totalFishCollected = 0;
-const speedLevelsCompleted = new Set();
+let levelKnockoutsAtStart = 0;
+let lastMissionPlayTick = 0;
 let levelNoticeTimeout = null;
 
 const catCoats = {
@@ -190,77 +244,163 @@ const nextLevels = [
   }
 ];
 
-function loadAchievements() {
+function localDateKey(date = new Date()) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function createDailyMissionState(date = localDateKey()) {
+  return {
+    date,
+    metrics: Object.fromEntries(missionMetrics.map((metric) => [metric, 0])),
+    completed: []
+  };
+}
+
+function loadDailyMissionState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(achievementStorageKey) || '[]');
-    if (!Array.isArray(saved)) return new Set();
-    return new Set(saved.filter((id) => achievementIds.includes(id)));
+    const saved = JSON.parse(localStorage.getItem(achievementStorageKey) || 'null');
+    if (!saved || saved.date !== localDateKey() || !saved.metrics || !Array.isArray(saved.completed)) {
+      return createDailyMissionState();
+    }
+
+    const metrics = Object.fromEntries(missionMetrics.map((metric) => {
+      const value = Number(saved.metrics[metric]);
+      return [metric, Number.isFinite(value) && value >= 0 ? value : 0];
+    }));
+    const validMissionIds = new Set(missionCatalog.map((mission) => mission.id));
+    return {
+      date: saved.date,
+      metrics,
+      completed: saved.completed.filter((id) => validMissionIds.has(id))
+    };
   } catch (error) {
-    console.warn('Could not load saved achievements:', error);
-    return new Set();
+    console.warn('Could not load daily mission progress:', error);
+    return createDailyMissionState();
   }
 }
 
-function saveAchievements() {
+function saveDailyMissionState() {
   try {
-    localStorage.setItem(achievementStorageKey, JSON.stringify([...unlockedAchievements]));
+    localStorage.setItem(achievementStorageKey, JSON.stringify(dailyMissionState));
   } catch (error) {
-    console.warn('Could not save achievements:', error);
+    console.warn('Could not save daily mission progress:', error);
   }
+}
+
+function currentDailyMissions() {
+  const [year, month, day] = dailyMissionState.date.split('-').map(Number);
+  const dayNumber = Math.floor(Date.UTC(year, month - 1, day) / 86400000);
+  return dailyMissionSets[dayNumber % dailyMissionSets.length];
+}
+
+function refreshDailyMissionDate() {
+  const date = localDateKey();
+  if (dailyMissionState.date === date) return false;
+  dailyMissionState = createDailyMissionState(date);
+  saveDailyMissionState();
+  renderAchievements();
+  return true;
+}
+
+function updateMissionCompletion() {
+  const completed = new Set(dailyMissionState.completed);
+  let changed = false;
+  for (const mission of currentDailyMissions()) {
+    if (!completed.has(mission.id) && dailyMissionState.metrics[mission.metric] >= mission.target) {
+      completed.add(mission.id);
+      changed = true;
+    }
+  }
+  if (!changed) return;
+
+  dailyMissionState.completed = [...completed];
+  saveDailyMissionState();
+  renderAchievements();
+  for (const mission of currentDailyMissions()) {
+    if (!completed.has(mission.id)) continue;
+    const card = achievementListEl.querySelector(`[data-mission="${mission.id}"]`);
+    if (card) {
+      card.classList.remove('just-unlocked');
+      void card.offsetWidth;
+      card.classList.add('just-unlocked');
+    }
+  }
+}
+
+function recordMissionProgress(metric, amount = 1) {
+  refreshDailyMissionDate();
+  dailyMissionState.metrics[metric] += amount;
+  updateMissionCompletion();
+  saveDailyMissionState();
 }
 
 function clearAchievements() {
-  unlockedAchievements.clear();
-  speedLevelsCompleted.clear();
-  try {
-    localStorage.removeItem(achievementStorageKey);
-  } catch (error) {
-    console.warn('Could not clear saved achievements:', error);
-  }
+  dailyMissionState = createDailyMissionState();
+  saveDailyMissionState();
   renderAchievements();
-}
-
-function unlockAchievement(id) {
-  if (unlockedAchievements.has(id)) return;
-  unlockedAchievements.add(id);
-  saveAchievements();
-  renderAchievements();
-
-  const card = achievementCards.get(id);
-  if (card) {
-    card.classList.remove('just-unlocked');
-    void card.offsetWidth;
-    card.classList.add('just-unlocked');
-  }
 }
 
 function renderAchievements() {
+  const missions = currentDailyMissions();
+  const completed = new Set(dailyMissionState.completed);
+  achievementCountEl.textContent = `${missions.filter((mission) => completed.has(mission.id)).length} / ${missions.length} COMPLETE`;
+  achievementListEl.replaceChildren();
+
+  for (const mission of missions) {
+    const isComplete = completed.has(mission.id);
+    const item = document.createElement('li');
+    item.className = `achievement${isComplete ? ' unlocked' : ''}`;
+    item.dataset.mission = mission.id;
+
+    const mark = document.createElement('span');
+    mark.className = 'achievement-mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = isComplete ? '[*]' : '[ ]';
+
+    const copy = document.createElement('span');
+    copy.className = 'achievement-copy';
+    const title = document.createElement('strong');
+    title.textContent = mission.title;
+    const description = document.createElement('small');
+    description.textContent = mission.description;
+    copy.append(title, description);
+
+    const progress = document.createElement('span');
+    progress.className = 'achievement-progress';
+    progress.textContent = isComplete
+      ? 'COMPLETE'
+      : `${Math.min(dailyMissionState.metrics[mission.metric], mission.target)} / ${mission.target}`;
+
+    item.append(mark, copy, progress);
+    achievementListEl.appendChild(item);
+  }
+
+  const allComplete = missions.every((mission) => completed.has(mission.id));
+  nextMissionsEl.hidden = !allComplete;
+  updateNextMissionCountdown();
+  updateLevelTimer();
+}
+
+function updateLevelTimer() {
   const secondsLeft = gameStarted
     ? Math.max(0, Math.ceil(45 - (performance.now() - levelStartedAt) / 1000))
     : 45;
-  const progress = {
-    'fish-fan': `${totalFishCollected} / 15`,
-    'clean-paws': `${knockouts} knockouts`,
-    'speed-paws': `${speedLevelsCompleted.size} / 3 stages`,
-    'nine-lives': `${Math.min(knockouts, 3)} / 3`
-  };
-
   levelTimerEl.textContent = secondsLeft > 0 ? `${secondsLeft}s` : 'TIME UP';
   levelTimerEl.classList.toggle('timer-expired', secondsLeft === 0);
-  for (const id of achievementIds) {
-    const card = achievementCards.get(id);
-    if (!card) continue;
-    const unlocked = unlockedAchievements.has(id);
-    card.classList.toggle('unlocked', unlocked);
-    card.querySelector('.achievement-mark').textContent = unlocked ? '[*]' : '[ ]';
-    card.querySelector('.achievement-progress').textContent = unlocked ? 'UNLOCKED' : progress[id];
-  }
-  achievementCountEl.textContent = `${unlockedAchievements.size} / ${achievementIds.length} UNLOCKED`;
 }
 
-function checkFinishAchievements() {
-  if (knockouts === 0) unlockAchievement('clean-paws');
-  if (knockouts >= 3) unlockAchievement('nine-lives');
+function updateNextMissionCountdown() {
+  if (nextMissionsEl.hidden) return;
+  const now = new Date();
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const secondsRemaining = Math.max(0, Math.floor((tomorrow.getTime() - now.getTime()) / 1000));
+  const hours = String(Math.floor(secondsRemaining / 3600)).padStart(2, '0');
+  const minutes = String(Math.floor((secondsRemaining % 3600) / 60)).padStart(2, '0');
+  const seconds = String(secondsRemaining % 60).padStart(2, '0');
+  nextMissionsEl.textContent = `ALL DAILY MISSIONS COMPLETE - NEW MISSIONS IN ${hours}:${minutes}:${seconds}`;
 }
 
 function selectCat(cat) {
@@ -277,6 +417,9 @@ function startGame() {
   gameStarted = true;
   gameStartedAt = performance.now();
   levelStartedAt = gameStartedAt;
+  lastMissionPlayTick = gameStartedAt;
+  levelKnockoutsAtStart = knockouts;
+  lastMissionPlayTick = performance.now();
   catSelectEl.hidden = true;
   renderAchievements();
 }
@@ -445,6 +588,8 @@ function loadLevel(index) {
 
   resetPlayer();
   levelStartedAt = performance.now();
+  lastMissionPlayTick = levelStartedAt;
+  levelKnockoutsAtStart = knockouts;
   renderAchievements();
 }
 
@@ -486,6 +631,7 @@ function updatePlayer() {
   if (jumpQueued && player.onGround) {
     player.vy = -player.jumpForce;
     player.onGround = false;
+    recordMissionProgress('jumps');
   }
   jumpQueued = false;
 
@@ -527,6 +673,7 @@ function updatePlayer() {
 
 function respawnPlayer() {
   knockouts += 1;
+  recordMissionProgress('knockouts');
   const levelData = levelIndex === 0 ? firstLevel : nextLevels[levelIndex - 1];
   saws = levelData.saws.map((saw) => ({ ...saw }));
   cameraX = 0;
@@ -551,13 +698,13 @@ function checkCollectibles() {
       if (rectsOverlap(playerRect(), fishBox)) {
         item.collected = true;
         totalFishCollected += 1;
+        recordMissionProgress('fish');
         for (let i = 0; i < 16; i += 1) spawnSpark(item.x, item.y);
       }
     }
     if (item.collected) collected += 1;
   });
   fishCountEl.textContent = String(collected);
-  if (totalFishCollected === 15) unlockAchievement('fish-fan');
   return collected;
 }
 
@@ -655,12 +802,6 @@ function showWinScreen(hasNextLevel) {
   subtitle.textContent = hasNextLevel ? 'GET READY FOR THE NEXT STAGE' : 'ALL THREE LEVELS CLEARED';
   panel.appendChild(title);
   panel.appendChild(subtitle);
-  if (!hasNextLevel) {
-    const warning = document.createElement('div');
-    warning.className = 'win-warning';
-    warning.textContent = 'WARNING: PLAY AGAIN WILL RESET ALL ACHIEVEMENTS';
-    panel.appendChild(warning);
-  }
 
   overlay.appendChild(flash);
   overlay.appendChild(confettiLayer);
@@ -680,7 +821,6 @@ function showWinScreen(hasNextLevel) {
   replayButton.type = 'button';
   replayButton.textContent = 'PLAY AGAIN';
   replayButton.addEventListener('click', () => {
-    clearAchievements();
     totalFishCollected = 0;
     knockouts = 0;
     gameStartedAt = performance.now();
@@ -702,11 +842,10 @@ function checkWin() {
       player.vy = 0;
       const hasNextLevel = levelIndex < 2;
       if ((performance.now() - levelStartedAt) / 1000 < 45) {
-        speedLevelsCompleted.add(levelIndex);
-        if (speedLevelsCompleted.size === 3) unlockAchievement('speed-paws');
+        recordMissionProgress('fastLevels');
       }
-      renderAchievements();
-      if (!hasNextLevel) checkFinishAchievements();
+      recordMissionProgress('levels');
+      if (knockouts === levelKnockoutsAtStart) recordMissionProgress('cleanLevels');
       showWinScreen(hasNextLevel);
       return true;
     }
@@ -951,7 +1090,6 @@ function update() {
   checkSpikesAndSaws();
   checkWin();
   updateParticles();
-  renderAchievements();
 
   const targetCamera = Math.max(0, Math.min(player.x - canvas.width * 0.42, world.width - canvas.width));
   cameraX += (targetCamera - cameraX) * 0.12;
@@ -977,6 +1115,11 @@ function gameLoop() {
 }
 
 window.addEventListener('keydown', (event) => {
+  if (bugReportDialog.open) {
+    if (event.key === 'Escape') bugReportDialog.close();
+    return;
+  }
+
   const key = event.key.toLowerCase();
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key) || event.code === 'Space') {
     event.preventDefault();
@@ -999,6 +1142,77 @@ for (const button of catOptionButtons) {
   button.addEventListener('click', () => selectCat(button.dataset.cat));
 }
 startGameButton.addEventListener('click', startGame);
+resetAchievementsButton.addEventListener('click', () => {
+  if (window.confirm("Reset today's daily mission progress? This cannot be undone.")) {
+    clearAchievements();
+  }
+});
+
+openBugReportButton.addEventListener('click', () => {
+  bugReportStatus.textContent = '';
+  bugReportDialog.showModal();
+  bugCategorySelect.focus();
+});
+
+document.getElementById('closeBugReport').addEventListener('click', () => bugReportDialog.close());
+document.getElementById('cancelBugReport').addEventListener('click', () => bugReportDialog.close());
+bugReportDialog.addEventListener('click', (event) => {
+  if (event.target === bugReportDialog) bugReportDialog.close();
+});
+bugReportDialog.addEventListener('close', () => {
+  keys.left = false;
+  keys.right = false;
+  keys.a = false;
+  keys.d = false;
+});
+bugCategorySelect.addEventListener('change', () => {
+  const isOther = bugCategorySelect.value === 'Other';
+  bugOtherInput.hidden = !isOther;
+  bugOtherLabel.hidden = !isOther;
+  bugOtherInput.required = isOther;
+  if (isOther) bugOtherInput.focus();
+});
+bugReportForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!bugReportForm.reportValidity()) return;
+  if (!bugReportEndpoint) {
+    bugReportStatus.textContent = 'Reports are not connected yet. The site owner needs to finish setting up the form.';
+    return;
+  }
+
+  submitBugReportButton.disabled = true;
+  bugReportStatus.textContent = 'SENDING REPORT...';
+  const formData = Object.fromEntries(new FormData(bugReportForm));
+  const currentLevelName = levelIndex === 0 ? 'MOONLIT ROOFTOPS' : nextLevels[levelIndex - 1].name;
+  formData.level = `${levelIndex + 1} - ${currentLevelName}`;
+  formData.cat = selectedCat;
+
+  try {
+    const response = await fetch(bugReportEndpoint, {
+      method: 'POST',
+      body: JSON.stringify(formData),
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    const result = await response.json();
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || `Bug report request failed with status ${response.status}.`);
+    }
+
+    bugReportForm.reset();
+    bugOtherInput.hidden = true;
+    bugOtherLabel.hidden = true;
+    bugOtherInput.required = false;
+    bugReportStatus.textContent = 'THANKS! YOUR REPORT WAS SENT.';
+  } catch (error) {
+    console.error('Could not send bug report:', error);
+    bugReportStatus.textContent = 'Could not send your report. Check your connection and try again. If this is the first report, verify the FormSubmit email sent to the game owner.';
+  } finally {
+    submitBugReportButton.disabled = false;
+  }
+});
 
 chiptuneToggle.addEventListener('click', toggleChiptune);
 musicVolume.addEventListener('input', () => {
@@ -1032,6 +1246,21 @@ musicAudio.addEventListener('play', () => {
 musicAudio.addEventListener('pause', () => {
   if (musicAudio.currentSrc && !musicAudio.ended) musicStatus.textContent = 'PAUSED';
 });
+
+window.setInterval(() => {
+  refreshDailyMissionDate();
+  updateNextMissionCountdown();
+  updateLevelTimer();
+
+  if (gameStarted && !hasWon) {
+    const now = performance.now();
+    const elapsedSeconds = Math.floor((now - lastMissionPlayTick) / 1000);
+    if (elapsedSeconds > 0) {
+      lastMissionPlayTick += elapsedSeconds * 1000;
+      recordMissionProgress('playSeconds', elapsedSeconds);
+    }
+  }
+}, 1000);
 
 resetPlayer();
 renderAchievements();
