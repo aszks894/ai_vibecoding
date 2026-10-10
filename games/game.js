@@ -1,10 +1,39 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const fishCountEl = document.getElementById('fishCount');
+const levelLabelEl = document.getElementById('levelLabel');
 const achievementCountEl = document.getElementById('achievementCount');
 const catSelectEl = document.getElementById('catSelect');
 const startGameButton = document.getElementById('startGame');
 const catOptionButtons = [...document.querySelectorAll('.cat-option')];
+const musicFileInput = document.getElementById('musicFile');
+const musicAudio = document.getElementById('musicAudio');
+const musicStatus = document.getElementById('musicStatus');
+const chiptuneToggle = document.getElementById('chiptuneToggle');
+const chiptuneStatus = document.getElementById('chiptuneStatus');
+const musicVolume = document.getElementById('musicVolume');
+let musicObjectUrl = null;
+let audioContext = null;
+let musicGain = null;
+let chiptuneTimer = null;
+let chiptunePlaying = false;
+let nextNoteTime = 0;
+let stepIndex = 0;
+
+const beatSeconds = 60 / 156;
+const notePattern = [
+  72, null, 75, 79, null, 75, 72, 70,
+  67, null, 70, 75, null, 70, 67, 63,
+  72, null, 75, 82, null, 79, 75, 72,
+  70, null, 75, 79, 75, 70, 67, null
+];
+const bassPattern = [
+  36, null, null, 36, 36, null, 39, null,
+  32, null, 32, null, 32, null, 36, null,
+  36, null, null, 36, 36, null, 39, null,
+  34, null, 34, null, 34, null, 31, null
+];
+let noiseBuffer = null;
 
 const achievementIds = ['fish-fan', 'clean-paws', 'speed-paws', 'nine-lives'];
 const achievementCards = new Map(
@@ -16,6 +45,8 @@ let gameStartedAt = 0;
 let gameStarted = false;
 let knockouts = 0;
 let selectedCat = 'white';
+let levelIndex = 0;
+let totalFishCollected = 0;
 
 const catCoats = {
   white: { fur: '#f2f2f2', innerEar: '#686868', stripes: false },
@@ -48,7 +79,7 @@ const player = {
   invulnerable: 0
 };
 
-const platforms = [
+let platforms = [
   { x: 0, y: 500, w: 420, h: 40 },
   { x: 470, y: 420, w: 170, h: 20 },
   { x: 670, y: 340, w: 220, h: 20 },
@@ -61,18 +92,18 @@ const platforms = [
   { x: 1525, y: 220, w: 70, h: 12 }
 ];
 
-const spikes = [
+let spikes = [
   { x: 380, y: 482, w: 70, h: 18 },
   { x: 1100, y: 482, w: 80, h: 18 },
   { x: 1560, y: 482, w: 120, h: 18 }
 ];
 
-const saws = [
+let saws = [
   { x: 770, y: 300, r: 16, minX: 700, maxX: 870, speed: 1.7, dir: 1 },
   { x: 1760, y: 240, r: 14, minX: 1710, maxX: 1828, speed: 1.5, dir: 1 }
 ];
 
-const fish = [
+let fish = [
   { x: 160, y: 454, collected: false },
   { x: 560, y: 384, collected: false },
   { x: 740, y: 304, collected: false },
@@ -80,7 +111,7 @@ const fish = [
   { x: 1760, y: 234, collected: false }
 ];
 
-const door = {
+let door = {
   x: 2010,
   y: 420,
   w: 32,
@@ -89,6 +120,70 @@ const door = {
 
 const particles = [];
 let hasWon = false;
+const firstLevel = {
+  width: world.width,
+  platforms,
+  spikes,
+  saws,
+  fish,
+  door: { ...door }
+};
+const nextLevels = [
+  {
+    name: 'SKYLINE SPRINT',
+    width: 2200,
+    platforms: [
+      { x: 0, y: 500, w: 350, h: 40 }, { x: 390, y: 440, w: 180, h: 20 },
+      { x: 610, y: 370, w: 190, h: 20 }, { x: 840, y: 430, w: 190, h: 20 },
+      { x: 1070, y: 350, w: 190, h: 20 }, { x: 1300, y: 280, w: 170, h: 20 },
+      { x: 1510, y: 360, w: 190, h: 20 }, { x: 1740, y: 290, w: 180, h: 20 },
+      { x: 1960, y: 460, w: 240, h: 40 }, { x: 900, y: 300, w: 65, h: 12 },
+      { x: 1600, y: 230, w: 70, h: 12 }
+    ],
+    spikes: [
+      { x: 310, y: 482, w: 60, h: 18 }, { x: 1020, y: 412, w: 48, h: 18 },
+      { x: 1685, y: 342, w: 45, h: 18 }
+    ],
+    saws: [
+      { x: 700, y: 330, r: 15, minX: 630, maxX: 785, speed: 2, dir: 1 },
+      { x: 1810, y: 250, r: 16, minX: 1750, maxX: 1900, speed: 2.1, dir: -1 }
+    ],
+    fish: [
+      { x: 170, y: 455 }, { x: 485, y: 405 }, { x: 1130, y: 315 },
+      { x: 1360, y: 245 }, { x: 1790, y: 255 }
+    ],
+    door: { x: 2155, y: 380, w: 32, h: 80 },
+    start: { x: 70, y: 460 }
+  },
+  {
+    name: 'NEON FOUNDRY',
+    width: 2300,
+    platforms: [
+      { x: 0, y: 500, w: 300, h: 40 }, { x: 350, y: 435, w: 165, h: 20 },
+      { x: 565, y: 365, w: 165, h: 20 }, { x: 780, y: 300, w: 170, h: 20 },
+      { x: 1000, y: 370, w: 170, h: 20 }, { x: 1220, y: 295, w: 170, h: 20 },
+      { x: 1440, y: 355, w: 170, h: 20 }, { x: 1660, y: 275, w: 170, h: 20 },
+      { x: 1880, y: 350, w: 160, h: 20 }, { x: 2090, y: 460, w: 210, h: 40 },
+      { x: 1080, y: 245, w: 65, h: 12 }, { x: 1750, y: 215, w: 65, h: 12 }
+    ],
+    spikes: [
+      { x: 290, y: 482, w: 55, h: 18 }, { x: 730, y: 482, w: 45, h: 18 },
+      { x: 1170, y: 482, w: 50, h: 18 }, { x: 1608, y: 482, w: 48, h: 18 },
+      { x: 1830, y: 482, w: 55, h: 18 }
+    ],
+    saws: [
+      { x: 645, y: 325, r: 16, minX: 580, maxX: 715, speed: 2.3, dir: 1 },
+      { x: 1300, y: 255, r: 15, minX: 1230, maxX: 1380, speed: 2.5, dir: -1 },
+      { x: 1735, y: 235, r: 16, minX: 1670, maxX: 1810, speed: 2.4, dir: 1 }
+    ],
+    fish: [
+      { x: 145, y: 455 }, { x: 600, y: 335 }, { x: 840, y: 270 },
+      { x: 1260, y: 265 }, { x: 1710, y: 245 }
+    ],
+    door: { x: 2250, y: 380, w: 32, h: 80 },
+    start: { x: 65, y: 460 }
+  }
+];
 
 function loadAchievements() {
   try {
@@ -127,7 +222,7 @@ function renderAchievements() {
   const collected = fish.filter((item) => item.collected).length;
   const elapsedSeconds = gameStarted ? (performance.now() - gameStartedAt) / 1000 : 0;
   const progress = {
-    'fish-fan': `${collected} / 5`,
+    'fish-fan': `${totalFishCollected} / 15`,
     'clean-paws': `${knockouts} knockouts`,
     'speed-paws': `${Math.max(0, Math.ceil(45 - elapsedSeconds))}s left`,
     'nine-lives': `${Math.min(knockouts, 3)} / 3`
@@ -168,13 +263,170 @@ function startGame() {
   renderAchievements();
 }
 
+function midiFrequency(note) {
+  return 440 * Math.pow(2, (note - 69) / 12);
+}
+
+function playSynthNote(frequency, startTime, duration, type, peakGain) {
+  const oscillator = audioContext.createOscillator();
+  const envelope = audioContext.createGain();
+  const filter = audioContext.createBiquadFilter();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startTime);
+  envelope.gain.setValueAtTime(0.0001, startTime);
+  envelope.gain.exponentialRampToValueAtTime(peakGain, startTime + 0.008);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + duration + 0.025);
+  filter.type = 'lowpass';
+  filter.frequency.setValueAtTime(type === 'sawtooth' ? 1800 : 2800, startTime);
+  oscillator.connect(envelope);
+  envelope.connect(filter);
+  filter.connect(musicGain);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration + 0.02);
+}
+
+function playKick(startTime) {
+  const oscillator = audioContext.createOscillator();
+  const envelope = audioContext.createGain();
+  oscillator.type = 'sine';
+  oscillator.frequency.setValueAtTime(145, startTime);
+  oscillator.frequency.exponentialRampToValueAtTime(43, startTime + 0.16);
+  envelope.gain.setValueAtTime(0.2, startTime);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.19);
+  oscillator.connect(envelope);
+  envelope.connect(musicGain);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + 0.2);
+}
+
+function playNoiseHit(startTime, duration, peakGain, cutoff, resonance = 0.7) {
+  if (!noiseBuffer) {
+    const bufferSize = audioContext.sampleRate;
+    noiseBuffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i += 1) {
+      data[i] = Math.random() * 2 - 1;
+    }
+  }
+
+  const source = audioContext.createBufferSource();
+  const filter = audioContext.createBiquadFilter();
+  const envelope = audioContext.createGain();
+  source.buffer = noiseBuffer;
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(cutoff, startTime);
+  filter.Q.value = resonance;
+  envelope.gain.setValueAtTime(peakGain, startTime);
+  envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  source.connect(filter);
+  filter.connect(envelope);
+  envelope.connect(musicGain);
+  source.start(startTime);
+  source.stop(startTime + duration);
+}
+
+function scheduleChiptuneStep(startTime, step) {
+  const note = notePattern[step];
+  if (note !== null) {
+    playSynthNote(midiFrequency(note), startTime, beatSeconds * 0.34, 'square', 0.038);
+    if (step % 4 === 2) {
+      playSynthNote(midiFrequency(note - 12), startTime, beatSeconds * 0.28, 'sawtooth', 0.022);
+    }
+  }
+
+  const bassNote = bassPattern[step];
+  if (bassNote !== null) {
+    playSynthNote(midiFrequency(bassNote), startTime, beatSeconds * 0.72, 'sawtooth', 0.085);
+  }
+
+  if (step % 4 === 0) playKick(startTime);
+  if (step % 8 === 4) playNoiseHit(startTime, 0.11, 0.045, 900, 0.8);
+  if (step % 2 === 1) playNoiseHit(startTime, 0.035, 0.012, 6500, 0.5);
+}
+
+function scheduleChiptune() {
+  while (nextNoteTime < audioContext.currentTime + 0.12) {
+    scheduleChiptuneStep(nextNoteTime, stepIndex);
+    nextNoteTime += beatSeconds / 2;
+    stepIndex = (stepIndex + 1) % notePattern.length;
+  }
+}
+
+async function toggleChiptune() {
+  if (chiptunePlaying) {
+    chiptunePlaying = false;
+    window.clearInterval(chiptuneTimer);
+    chiptuneTimer = null;
+    musicGain.gain.setTargetAtTime(0, audioContext.currentTime, 0.06);
+    chiptuneToggle.textContent = 'PLAY CHIPTUNE';
+    chiptuneToggle.setAttribute('aria-pressed', 'false');
+    chiptuneStatus.textContent = 'PAUSED';
+    return;
+  }
+
+  try {
+    const AudioContextType = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextType) throw new Error('Web Audio API is unavailable in this browser.');
+    if (!audioContext) {
+      audioContext = new AudioContextType();
+      musicGain = audioContext.createGain();
+      musicGain.gain.value = Number(musicVolume.value) / 100;
+      musicGain.connect(audioContext.destination);
+    }
+    await audioContext.resume();
+    chiptunePlaying = true;
+    stepIndex = 0;
+    nextNoteTime = audioContext.currentTime + 0.05;
+    musicGain.gain.setTargetAtTime(Number(musicVolume.value) / 100, audioContext.currentTime, 0.04);
+    scheduleChiptune();
+    chiptuneTimer = window.setInterval(scheduleChiptune, 25);
+    chiptuneToggle.textContent = 'STOP CHIPTUNE';
+    chiptuneToggle.setAttribute('aria-pressed', 'true');
+    chiptuneStatus.textContent = 'PLAYING: 156 BPM ARCADE RUN';
+  } catch (error) {
+    console.error('Could not start the chiptune:', error);
+    chiptuneStatus.textContent = 'AUDIO UNAVAILABLE: TRY A MODERN BROWSER';
+  }
+}
+
 function resetPlayer() {
-  player.x = 84;
-  player.y = 360;
+  const start = levelIndex === 0 ? { x: 84, y: 360 } : nextLevels[levelIndex - 1].start;
+  player.x = start.x;
+  player.y = start.y;
   player.vx = 0;
   player.vy = 0;
   player.onGround = false;
   player.invulnerable = 60;
+}
+
+function loadLevel(index) {
+  levelIndex = index;
+  hasWon = false;
+  cameraX = 0;
+  particles.length = 0;
+  fishCountEl.textContent = '0';
+
+  if (index > 0) {
+    const level = nextLevels[index - 1];
+    world.width = level.width;
+    platforms = level.platforms;
+    spikes = level.spikes;
+    saws = level.saws.map((saw) => ({ ...saw }));
+    fish = level.fish.map((item) => ({ ...item, collected: false }));
+    door = level.door;
+    levelLabelEl.textContent = `LEVEL ${index + 1} / 3 - ${level.name}`;
+  } else {
+    world.width = firstLevel.width;
+    platforms = firstLevel.platforms;
+    spikes = firstLevel.spikes;
+    saws = firstLevel.saws.map((saw) => ({ ...saw }));
+    fish = firstLevel.fish.map((item) => ({ ...item, collected: false }));
+    door = { ...firstLevel.door };
+    levelLabelEl.textContent = 'LEVEL 1 / 3 - MOONLIT ROOFTOPS';
+  }
+
+  resetPlayer();
+  renderAchievements();
 }
 
 function isKeyPressed(key) {
@@ -268,13 +520,14 @@ function checkCollectibles() {
       const fishBox = { x: item.x - 10, y: item.y - 8, w: 20, h: 16 };
       if (rectsOverlap(playerRect(), fishBox)) {
         item.collected = true;
+        totalFishCollected += 1;
         for (let i = 0; i < 16; i += 1) spawnSpark(item.x, item.y);
       }
     }
     if (item.collected) collected += 1;
   });
   fishCountEl.textContent = String(collected);
-  if (collected === fish.length) unlockAchievement('fish-fan');
+  if (totalFishCollected === 15) unlockAchievement('fish-fan');
   return collected;
 }
 
@@ -328,7 +581,7 @@ function updateParticles() {
   }
 }
 
-function showWinScreen() {
+function showWinScreen(hasNextLevel) {
   const overlay = document.createElement('div');
   overlay.className = 'win-overlay';
 
@@ -362,34 +615,55 @@ function showWinScreen() {
 
   const panel = document.createElement('div');
   panel.className = 'win-panel';
-  panel.innerHTML = '<div class="win-title">YOU WIN</div><div class="win-subtitle">CAT ESCAPED</div>';
+  const title = document.createElement('div');
+  title.className = 'win-title';
+  title.textContent = hasNextLevel ? 'LEVEL CLEAR' : 'YOU WIN';
+  const subtitle = document.createElement('div');
+  subtitle.className = 'win-subtitle';
+  subtitle.textContent = hasNextLevel ? 'GET READY FOR THE NEXT STAGE' : 'ALL THREE LEVELS CLEARED';
+  panel.appendChild(title);
+  panel.appendChild(subtitle);
 
   overlay.appendChild(flash);
   overlay.appendChild(confettiLayer);
   overlay.appendChild(panel);
   document.body.appendChild(overlay);
-  document.body.style.pointerEvents = 'none';
 
-  setTimeout(() => {
-    if (document.body.contains(overlay)) {
-      document.body.removeChild(overlay);
-    }
-    location.reload();
-  }, 2200);
+  if (hasNextLevel) {
+    window.setTimeout(() => {
+      if (document.body.contains(overlay)) document.body.removeChild(overlay);
+      loadLevel(levelIndex + 1);
+    }, 1800);
+    return;
+  }
+
+  const replayButton = document.createElement('button');
+  replayButton.className = 'start-button replay-button';
+  replayButton.type = 'button';
+  replayButton.textContent = 'PLAY AGAIN';
+  replayButton.addEventListener('click', () => {
+    totalFishCollected = 0;
+    knockouts = 0;
+    gameStartedAt = performance.now();
+    loadLevel(0);
+    overlay.remove();
+  });
+  panel.appendChild(replayButton);
 }
 
 function checkWin() {
   if (hasWon) return true;
 
   const collected = checkCollectibles();
-  if (collected >= 5) {
+  if (collected === fish.length) {
     const doorRect = { x: door.x, y: door.y, w: door.w, h: door.h };
     if (rectsOverlap(playerRect(), doorRect)) {
       hasWon = true;
       player.vx = 0;
       player.vy = 0;
-      checkFinishAchievements();
-      showWinScreen();
+      const hasNextLevel = levelIndex < 2;
+      if (!hasNextLevel) checkFinishAchievements();
+      showWinScreen(hasNextLevel);
       return true;
     }
   }
@@ -680,6 +954,39 @@ for (const button of catOptionButtons) {
   button.addEventListener('click', () => selectCat(button.dataset.cat));
 }
 startGameButton.addEventListener('click', startGame);
+
+chiptuneToggle.addEventListener('click', toggleChiptune);
+musicVolume.addEventListener('input', () => {
+  if (musicGain && chiptunePlaying) {
+    musicGain.gain.setTargetAtTime(Number(musicVolume.value) / 100, audioContext.currentTime, 0.03);
+  }
+  musicAudio.volume = Number(musicVolume.value) / 100;
+});
+
+musicFileInput.addEventListener('change', () => {
+  const [file] = musicFileInput.files;
+  if (!file) return;
+
+  if (musicObjectUrl) URL.revokeObjectURL(musicObjectUrl);
+  musicObjectUrl = URL.createObjectURL(file);
+  musicAudio.src = musicObjectUrl;
+  musicAudio.hidden = false;
+  musicAudio.load();
+  musicAudio.volume = Number(musicVolume.value) / 100;
+  musicStatus.textContent = `READY: ${file.name} - PRESS PLAY`;
+});
+
+musicAudio.addEventListener('error', () => {
+  musicStatus.textContent = 'Could not play this audio file. Try another supported format.';
+});
+
+musicAudio.addEventListener('play', () => {
+  musicStatus.textContent = 'PLAYING';
+});
+
+musicAudio.addEventListener('pause', () => {
+  if (musicAudio.currentSrc && !musicAudio.ended) musicStatus.textContent = 'PAUSED';
+});
 
 resetPlayer();
 renderAchievements();
