@@ -1,6 +1,6 @@
-# Cat Platformer
+# CatDash
 
-An old-school monochrome cat platformer with three stages, selectable cats, and synthesized arcade music.
+An old-school monochrome platform game starring cats, with three stages, selectable cats, and synthesized arcade music.
 
 Daily missions draw from a 48-mission catalog arranged into a 13-day rotation. Mission progress and completions are saved in browser storage; completing the day's missions shows a countdown to local midnight. Use **Reset Today** to clear the current day's mission progress.
 
