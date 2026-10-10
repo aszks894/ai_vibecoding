@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cat Platformer</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="hud">
+        <div><span class="label">CAT</span> PLATFORMER</div>
+        <div class="meta"><span id="fishCount">0</span> / 5 fish</div>
+      </header>
+      <canvas id="game" width="960" height="540" aria-label="Cat platformer game"></canvas>
+      <div class="help">Move: A/D or ←/→ | Jump: W/↑/Space | Collect fish, then reach the door.</div>
+      <section class="achievements" aria-labelledby="achievementsTitle">
+        <div class="achievements-heading">
+          <h2 id="achievementsTitle">MISSIONS</h2>
+          <span id="achievementCount">0 / 4 UNLOCKED</span>
+        </div>
+        <ul class="achievement-list">
+          <li class="achievement" data-achievement="fish-fan">
+            <span class="achievement-mark" aria-hidden="true">[ ]</span>
+            <span class="achievement-copy"><strong>FISH FAN</strong><small>Collect every fish</small></span>
+            <span class="achievement-progress">0 / 5</span>
+          </li>
+          <li class="achievement" data-achievement="clean-paws">
+            <span class="achievement-mark" aria-hidden="true">[ ]</span>
+            <span class="achievement-copy"><strong>CLEAN PAWS</strong><small>Reach the door with no knockouts</small></span>
+            <span class="achievement-progress">0 knockouts</span>
+          </li>
+          <li class="achievement" data-achievement="speed-paws">
+            <span class="achievement-mark" aria-hidden="true">[ ]</span>
+            <span class="achievement-copy"><strong>SPEED PAWS</strong><small>Finish in under 45 seconds</small></span>
+            <span class="achievement-progress">45s left</span>
+          </li>
+          <li class="achievement" data-achievement="nine-lives">
+            <span class="achievement-mark" aria-hidden="true">[ ]</span>
+            <span class="achievement-copy"><strong>NINE LIVES</strong><small>Finish after 3 knockouts</small></span>
+            <span class="achievement-progress">0 / 3</span>
+          </li>
+        </ul>
+      </section>
+    </main>
+    <section class="cat-select" id="catSelect" role="dialog" aria-modal="true" aria-labelledby="catSelectTitle">
+      <div class="select-panel">
+        <p class="select-kicker">PLAYER ONE</p>
+        <h1 id="catSelectTitle">CHOOSE YOUR CAT</h1>
+        <p class="select-intro">Pick a look before heading out for the fish.</p>
+        <div class="cat-options" role="group" aria-label="Choose your cat">
+          <button class="cat-option selected" type="button" data-cat="white" aria-pressed="true">
+            <svg class="cat-preview" viewBox="0 0 120 82" aria-hidden="true">
+              <path class="preview-outline" d="M31 54C15 68 18 44 28 43M34 51c0-14 4-20 13-23l-2-17 17 12c4-1 9-1 13 0l17-12-2 19c7 5 10 12 10 21v13H35z"/>
+              <path class="preview-fur" d="M35 52c0-13 5-20 14-22l-1-12 12 9c5-1 9-1 14 0l12-9-1 14c6 4 9 11 9 19v12H35z"/>
+              <path class="preview-face" d="M48 42h4v6h-4zm20 0h4v6h-4zm-10 9h6l-3 3z"/>
+              <path class="preview-paws" d="M40 61h12v8H40zm29 0h12v8H69z"/>
+            </svg>
+            <strong>WHITE CAT</strong>
+            <span>Classic, curious, quick.</span>
+          </button>
+          <button class="cat-option" type="button" data-cat="gray" aria-pressed="false">
+            <svg class="cat-preview gray-preview" viewBox="0 0 120 82" aria-hidden="true">
+              <path class="preview-outline" d="M31 54C15 68 18 44 28 43M34 51c0-14 4-20 13-23l-2-17 17 12c4-1 9-1 13 0l17-12-2 19c7 5 10 12 10 21v13H35z"/>
+              <path class="preview-fur" d="M35 52c0-13 5-20 14-22l-1-12 12 9c5-1 9-1 14 0l12-9-1 14c6 4 9 11 9 19v12H35z"/>
+              <path class="preview-face" d="M48 42h4v6h-4zm20 0h4v6h-4zm-10 9h6l-3 3z"/>
+              <path class="preview-paws" d="M40 61h12v8H40zm29 0h12v8H69z"/>
+            </svg>
+            <strong>GRAY CAT</strong>
+            <span>Cool coat, calm paws.</span>
+          </button>
+          <button class="cat-option" type="button" data-cat="tiger" aria-pressed="false">
+            <svg class="cat-preview tiger-preview" viewBox="0 0 120 82" aria-hidden="true">
+              <path class="preview-outline" d="M31 54C15 68 18 44 28 43M34 51c0-14 4-20 13-23l-2-17 17 12c4-1 9-1 13 0l17-12-2 19c7 5 10 12 10 21v13H35z"/>
+              <path class="preview-fur" d="M35 52c0-13 5-20 14-22l-1-12 12 9c5-1 9-1 14 0l12-9-1 14c6 4 9 11 9 19v12H35z"/>
+              <path class="preview-stripes" d="m51 32 5 7m13-7-5 7M39 54l9 2m32-2 9-2M53 57l5-4m13 4-5-4"/>
+              <path class="preview-face" d="M48 42h4v6h-4zm20 0h4v6h-4zm-10 9h6l-3 3z"/>
+              <path class="preview-paws" d="M40 61h12v8H40zm29 0h12v8H69z"/>
+            </svg>
+            <strong>WHITE TIGER</strong>
+            <span>Bold stripes, big jumps.</span>
+          </button>
+        </div>
+        <button class="start-button" id="startGame" type="button">START ADVENTURE</button>
+      </div>
+    </section>
+    <script src="game.js"></script>
+  </body>
+</html>
