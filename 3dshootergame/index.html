@@ -1,0 +1,46 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Graybox FPS</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js" } }
+  </script>
+  <script type="module" src="game.js"></script>
+</head>
+<body>
+  <main id="game">
+    <div id="hud" aria-live="polite">
+      <div class="hud-card health-card">
+        <span class="label">HEALTH</span>
+        <div class="health-track"><div id="health-fill"></div></div>
+        <span id="health-value">100</span>
+      </div>
+      <div class="hud-card enemy-card"><span class="label">HOSTILES</span><strong id="enemy-count">3</strong></div>
+    </div>
+    <div id="crosshair" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div id="weapon" aria-hidden="true"><div class="weapon-sight"></div><div class="weapon-body"></div><div class="weapon-grip"></div><div class="muzzle-flash"></div></div>
+    <div id="hit-marker" aria-hidden="true">×</div>
+    <div id="start-screen" class="screen">
+      <div class="panel">
+        <p class="eyebrow">TRAINING SIMULATION</p>
+        <h1>GRAYBOX<br><span>ARENA</span></h1>
+        <p>Three hostiles are active. Clear the arena.</p>
+        <button id="start-button">ENTER ARENA</button>
+        <p class="controls">WASD move <b>·</b> SPACE jump <b>·</b> MOUSE aim <b>·</b> CLICK fire</p>
+      </div>
+    </div>
+    <div id="end-screen" class="screen hidden">
+      <div class="panel">
+        <p class="eyebrow">SIMULATION COMPLETE</p>
+        <h2 id="end-title">VICTORY</h2>
+        <p id="end-copy">All hostiles eliminated.</p>
+        <button id="restart-button">RESTART</button>
+      </div>
+    </div>
+    <div id="toast" role="status"></div>
+  </main>
+</body>
+</html>
