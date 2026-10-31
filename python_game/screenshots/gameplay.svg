@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-labelledby="title desc">
+  <title id="title">Claw machine gameplay screenshot</title>
+  <desc id="desc">A blue and lavender claw machine with a claw above a pile of colorful round prizes.</desc>
+  <defs>
+    <linearGradient id="glass" x2="0" y2="1"><stop stop-color="#f9fdff"/><stop offset="1" stop-color="#e7f5fa"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="3"/></filter>
+  </defs>
+  <rect width="800" height="600" fill="#fff8ed"/>
+  <rect x="35" y="24" width="730" height="552" rx="14" fill="#d3edf3"/>
+  <rect x="49" y="38" width="702" height="524" rx="10" fill="#fff8ed"/>
+  <rect x="72" y="50" width="656" height="60" rx="8" fill="#b2c8e4"/>
+  <text x="400" y="82" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="Trebuchet MS,sans-serif" font-size="25" font-weight="bold">definitely not rigged claw machine</text>
+  <rect x="83" y="125" width="634" height="375" rx="5" fill="url(#glass)" stroke="#94c0e9" stroke-width="4"/>
+  <path d="M101 153v217M113 153v145" stroke="white" stroke-width="5" opacity=".9"/>
+  <g fill="#56595a" opacity=".18" filter="url(#shadow)"><ellipse cx="182" cy="473" rx="25" ry="8"/><ellipse cx="240" cy="451" rx="27" ry="8"/><ellipse cx="301" cy="478" rx="25" ry="8"/><ellipse cx="358" cy="452" rx="27" ry="8"/><ellipse cx="420" cy="476" rx="25" ry="8"/><ellipse cx="478" cy="449" rx="27" ry="8"/><ellipse cx="539" cy="476" rx="25" ry="8"/><ellipse cx="592" cy="452" rx="26" ry="8"/></g>
+  <g stroke="white" stroke-width="2"><circle cx="182" cy="446" r="25" fill="#517bb3"/><circle cx="240" cy="424" r="27" fill="#7ab0e2"/><circle cx="301" cy="451" r="25" fill="#5d7aa5"/><circle cx="358" cy="425" r="27" fill="#8fb2da"/><circle cx="420" cy="449" r="25" fill="#4f7eb3"/><circle cx="478" cy="422" r="27" fill="#7cb1ff"/><circle cx="539" cy="449" r="25" fill="#517bb3"/><circle cx="592" cy="425" r="26" fill="#8fb2da"/></g>
+  <g fill="white" font-family="Segoe UI Symbol,sans-serif" font-size="25" text-anchor="middle" dominant-baseline="central"><text x="182" y="446">★</text><text x="240" y="424">★</text><text x="301" y="451">★</text><text x="358" y="425">★</text><text x="420" y="449">★</text><text x="478" y="422">★</text><text x="539" y="449">★</text><text x="592" y="425">★</text></g>
+  <path d="M92 497h616v14H92z" fill="#94c0e9"/>
+  <rect x="630" y="479" width="75" height="56" rx="3" fill="#b8d5dd" stroke="#94c0e9" stroke-width="3"/>
+  <text x="668" y="521" text-anchor="middle" fill="#55465e" font-family="Trebuchet MS,sans-serif" font-size="10" font-weight="bold">PRIZE</text>
+  <path d="M390 88v71" stroke="#55465e" stroke-width="3"/><circle cx="390" cy="165" r="11" fill="#75b0f4" stroke="#55465e" stroke-width="2"/>
+  <g fill="none" stroke="#55465e" stroke-width="4" stroke-linecap="round"><path d="M390 175l-18 22M390 175l18 22"/><path d="M366 187q24 29 48 0"/></g>
+  <rect x="83" y="525" width="634" height="26" rx="4" fill="#bddae8"/>
+  <text x="98" y="542" fill="#55465e" font-family="Trebuchet MS,sans-serif" font-size="11" font-weight="bold">Move the claw and press Space to grab!</text>
+  <text x="702" y="542" text-anchor="end" fill="#55465e" font-family="Trebuchet MS,sans-serif" font-size="12" font-weight="bold">SCORE  0</text>
+  <text x="400" y="570" text-anchor="middle" fill="#55465e" font-family="Trebuchet MS,sans-serif" font-size="10" font-weight="bold">LEFT / RIGHT: MOVE     SPACE: GRAB     R: NEW GAME</text>
+</svg>

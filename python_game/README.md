@@ -1,7 +1,12 @@
-# Pastel Pocket Claw
+# Definitely Not Rigged Claw Machine
 
-A tiny virtual claw machine game written in Python with Tkinter. Collect the
-soft, colorful prizes and see how many you can deliver to the chute.
+A small claw machine game made with Python and Tkinter. Move the claw, try to
+pick up a toy, and get it to the prize chute. Sometimes the machine throws a
+toy instead.
+
+## Screenshot
+
+![Screenshot of the claw machine game with the claw above a pile of prizes](screenshots/gameplay.svg)
 
 ## Install and play (Windows)
 
@@ -42,7 +47,7 @@ In that command window, type this line and press **Enter**:
 py main.py
 ```
 
-A window titled **Pastel Pocket Claw** should appear. Leave the command window
+A window titled **Ur Not Gonna Win** should appear. Leave the command window
 open while you play. Close the game window when you are done.
 
 ## Playing
@@ -75,6 +80,8 @@ Linux systems Tkinter is a separate package; for Debian or Ubuntu, run
 
 - **Left / Right arrows**: move the claw while it is at the top
 - **Space**: lower the claw and try to grab the nearest prize
+- If the claw picks up a prize, there is a 30% chance it throws it back into
+  the machine instead.
 - **R**: start a fresh game
 
 Each prize delivered to the chute adds one point to your score.

@@ -46,6 +46,7 @@ class ClawMachine:
         self.yeeting: dict[str, object] | None = None
         self.yeet_vx = 0.0
         self.yeet_vy = 0.0
+        self.yeet_bounces = 0
         self.prizes = self._make_prizes()
         self.held: set[str] = set()
         self.root.bind("<KeyPress-Left>", lambda _event: self.held.add("left"))
@@ -68,8 +69,9 @@ class ClawMachine:
         for _ in range(13):
             color, symbol = random.choice(choices)
             prizes.append({
-                "x": random.randint(105, 695),
-                "y": random.randint(405, 495),
+                # Keep the full toy, including its edge, inside the glass.
+                "x": random.randint(114, 686),
+                "y": random.randint(405, 467),
                 "color": color,
                 "symbol": symbol,
                 "size": random.randint(22, 29),
@@ -103,10 +105,11 @@ class ClawMachine:
                 self.target = min(nearby, key=lambda p: abs(float(p["x"]) - self.claw_x)) if nearby else None
                 if self.target:
                     self.prizes.remove(self.target)
-                    if random.random() < 0.62:
+                    if random.random() < 0.30:
                         self.yeeting = self.target
-                        self.yeet_vx = random.choice([-1, 1]) * random.uniform(5.0, 9.0)
-                        self.yeet_vy = random.uniform(-10.0, -6.0)
+                        self.yeet_vx = random.choice([-1, 1]) * random.uniform(4.0, 6.0)
+                        self.yeet_vy = random.uniform(-8.0, -6.5)
+                        self.yeet_bounces = 0
                         self.message = "bye"
                         self.claw_state = "yeeting"
                     else:
@@ -135,14 +138,23 @@ class ClawMachine:
                 self.claw_state = "raising"
         elif self.claw_state == "yeeting":
             if self.yeeting:
-                self.yeet_vy += 0.45
-                self.yeeting["x"] = max(105, min(695, float(self.yeeting["x"]) + self.yeet_vx))
+                self.yeet_vy += 0.34
+                new_x = float(self.yeeting["x"]) + self.yeet_vx
+                left_edge, right_edge = 114, 686
+                if new_x < left_edge or new_x > right_edge:
+                    self.yeet_vx *= -0.45
+                    new_x = max(left_edge, min(right_edge, new_x))
+                self.yeeting["x"] = new_x
                 self.yeeting["y"] = float(self.yeeting["y"]) + self.yeet_vy
-                if float(self.yeeting["y"]) >= 475:
-                    self.yeeting["y"] = 475
-                    self.yeet_vy *= -0.45
-                    self.yeet_vx *= 0.65
-                    if abs(self.yeet_vy) < 2:
+                if float(self.yeeting["y"]) >= 468:
+                    self.yeeting["y"] = 468
+                    if self.yeet_bounces == 0 and abs(self.yeet_vy) > 2.5:
+                        self.yeet_vy *= -0.22
+                        self.yeet_vx *= 0.72
+                        self.yeet_bounces += 1
+                    else:
+                        self.yeet_vy = 0
+                        self.yeeting["x"] = max(left_edge, min(right_edge, float(self.yeeting["x"])))
                         self.prizes.append(self.yeeting)
                         self.yeeting = None
                         self.claw_state = "raising"
@@ -186,8 +198,8 @@ class ClawMachine:
         c.create_rectangle(35, 24, 765, 576, fill=PALETTE["pink"], outline="")
         c.create_rectangle(49, 38, 751, 562, fill=PALETTE["cream"], outline="")
         c.create_rectangle(72, 50, 728, 110, fill=PALETTE["lavender"], outline="")
-        c.create_text(400, 80, text="definently not rigged claw machine", fill=PALETTE["white"],
-                      font=("Trebuchet MS", 23, "bold"))
+        c.create_text(400, 80, text="definitely not rigged claw machine", fill=PALETTE["white"],
+                      font=("Trebuchet MS", 19, "bold"))
 
         # Glass playfield.
         c.create_rectangle(83, 125, 717, 500, fill=PALETTE["glass"],
@@ -212,8 +224,9 @@ class ClawMachine:
 
         # Control panel.
         c.create_rectangle(83, 525, 717, 551, fill=PALETTE["mint"], outline="")
-        c.create_text(300, 538, text=self.message, fill=PALETTE["ink"],
-                      font=("Trebuchet MS", 11, "bold"))
+        status = self.message if len(self.message) <= 58 else self.message[:55] + "..."
+        c.create_text(98, 538, text=status, anchor="w", fill=PALETTE["ink"],
+                      font=("Trebuchet MS", 10, "bold"))
         c.create_text(664, 539, text=f"★  {self.score}", fill=PALETTE["ink"],
                       font=("Trebuchet MS", 14, "bold"))
         c.create_text(400, 564, text="← → MOVE     SPACE GRAB     R NEW GAME",
