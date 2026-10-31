@@ -37,6 +37,16 @@ class ClawMachine:
         self.canvas.pack()
 
         self.score = 0
+        self.coins = 0
+        self.round_reward = 3
+        self.store_open = False
+        self.store_message = "Press 1, 2, or 3 to buy a prize."
+        self.collection: list[str] = []
+        self.store_items = [
+            {"name": "Labubu plush", "price": 12, "color": "#9ed6a5", "symbol": "☺"},
+            {"name": "Pastel star plush", "price": 8, "color": "#f3c9dc", "symbol": "★"},
+            {"name": "Lucky prize capsule", "price": 5, "color": "#c8b4e8", "symbol": "?"},
+        ]
         self.message = "Move with ← →   •   Press SPACE to grab!"
         self.claw_x = 390
         self.claw_y = 175
@@ -54,6 +64,11 @@ class ClawMachine:
         self.root.bind("<KeyPress-Right>", lambda _event: self.held.add("right"))
         self.root.bind("<KeyRelease-Right>", lambda _event: self.held.discard("right"))
         self.root.bind("<space>", self.drop_claw)
+        self.root.bind("s", self.toggle_store)
+        self.root.bind("S", self.toggle_store)
+        self.root.bind("<Escape>", self.close_store)
+        for item_key in ("1", "2", "3"):
+            self.root.bind(item_key, lambda _event, key=item_key: self.buy_item(int(key) - 1))
         self.root.bind("r", self.reset)
         self.root.bind("R", self.reset)
         self.draw()
@@ -101,12 +116,44 @@ class ClawMachine:
         self.draw()
 
     def drop_claw(self, _event: tk.Event | None = None) -> None:
-        if self.claw_state == "ready":
+        if self.claw_state == "ready" and not self.store_open:
             self.claw_state = "lowering"
             self.target = None
             self.message = "try to get smth (u probably wont i rigged the machine)"
 
+    def toggle_store(self, _event: tk.Event | None = None) -> None:
+        if self.claw_state != "ready":
+            self.message = "Wait for the round to finish before shopping."
+            return
+        self.store_open = not self.store_open
+        self.store_message = "Press 1, 2, or 3 to buy a prize."
+        self.draw()
+
+    def close_store(self, _event: tk.Event | None = None) -> None:
+        if self.store_open:
+            self.store_open = False
+            self.draw()
+
+    def buy_item(self, item_index: int) -> None:
+        if not self.store_open:
+            return
+        item = self.store_items[item_index]
+        price = int(item["price"])
+        name = str(item["name"])
+        if self.coins < price:
+            self.store_message = f"Need {price - self.coins} more coins for {name}."
+        else:
+            self.coins -= price
+            self.collection.append(name)
+            self.store_message = f"Bought {name}! It's in your collection."
+        self.draw()
+
     def tick(self) -> None:
+        if self.store_open:
+            self.draw()
+            self.draw_store()
+            self.root.after(25, self.tick)
+            return
         if self.claw_state == "ready":
             if "left" in self.held:
                 self.claw_x = max(95, self.claw_x - 5)
@@ -137,7 +184,12 @@ class ClawMachine:
         elif self.claw_state == "raising":
             self.claw_y = max(175, self.claw_y - 7)
             if self.claw_y <= 175:
-                self.claw_state = "returning" if self.carrying else "ready"
+                if self.carrying:
+                    self.claw_state = "returning"
+                else:
+                    self.claw_state = "ready"
+                    self.coins += self.round_reward
+                    self.message = f"Round complete! +{self.round_reward} coins. Press S to shop."
         elif self.claw_state == "returning":
             self.claw_x += 7
             if self.claw_x >= 690:
@@ -175,6 +227,38 @@ class ClawMachine:
 
         self.draw()
         self.root.after(25, self.tick)
+
+    def draw_store(self) -> None:
+        c = self.canvas
+        c.create_rectangle(108, 120, 692, 515, fill=PALETTE["ink"],
+                           outline=PALETTE["white"], width=3)
+        c.create_rectangle(116, 128, 684, 507, fill=PALETTE["cream"], outline="")
+        c.create_text(400, 157, text="PRIZE SHOP", fill=PALETTE["ink"],
+                      font=("Trebuchet MS", 24, "bold"))
+        c.create_text(400, 188,
+                      text=f"Coins: {self.coins}     |     Prizes collected: {len(self.collection)}",
+                      fill=PALETTE["ink"], font=("Trebuchet MS", 12, "bold"))
+        for index, item in enumerate(self.store_items):
+            y = 225 + index * 67
+            c.create_rectangle(143, y - 25, 657, y + 25, fill=PALETTE["white"],
+                               outline=PALETTE["lavender"], width=2)
+            c.create_oval(157, y - 17, 191, y + 17, fill=str(item["color"]),
+                          outline=PALETTE["lavender"], width=2)
+            c.create_text(174, y, text=str(item["symbol"]), fill=PALETTE["white"],
+                          font=("Trebuchet MS", 16, "bold"))
+            c.create_text(204, y, anchor="w", text=f"{index + 1}. {item['name']}",
+                          fill=PALETTE["ink"], font=("Trebuchet MS", 13, "bold"))
+            c.create_text(639, y, anchor="e", text=f"{item['price']} coins",
+                          fill=PALETTE["ink"], font=("Trebuchet MS", 12, "bold"))
+        c.create_text(400, 448, text=self.store_message, fill=PALETTE["ink"],
+                      font=("Trebuchet MS", 11, "bold"))
+        owned = ", ".join(self.collection[-3:]) if self.collection else "Nothing yet — win coins and pick a prize!"
+        if len(owned) > 66:
+            owned = owned[:63] + "..."
+        c.create_text(400, 473, text=f"Collection: {owned}", fill=PALETTE["ink"],
+                      font=("Trebuchet MS", 10))
+        c.create_text(400, 492, text="Press 1 / 2 / 3 to buy   |   S or Esc to close",
+                      fill=PALETTE["ink"], font=("Trebuchet MS", 10, "bold"))
 
     def draw_prize(self, prize: dict[str, object], x: float | None = None, y: float | None = None) -> None:
         px = float(prize["x"]) if x is None else x
@@ -238,12 +322,14 @@ class ClawMachine:
 
         # Control panel.
         c.create_rectangle(83, 525, 717, 551, fill=PALETTE["mint"], outline="")
-        status = self.message if len(self.message) <= 58 else self.message[:55] + "..."
+        status = self.message if len(self.message) <= 40 else self.message[:37] + "..."
         c.create_text(98, 538, text=status, anchor="w", fill=PALETTE["ink"],
                       font=("Trebuchet MS", 10, "bold"))
-        c.create_text(664, 539, text=f"★  {self.score}", fill=PALETTE["ink"],
-                      font=("Trebuchet MS", 14, "bold"))
-        c.create_text(400, 564, text="← → MOVE     SPACE GRAB     R NEW GAME",
+        c.create_text(558, 539, text=f"COINS {self.coins}", anchor="e", fill=PALETTE["ink"],
+                      font=("Trebuchet MS", 11, "bold"))
+        c.create_text(702, 539, text=f"SCORE {self.score}", anchor="e", fill=PALETTE["ink"],
+                      font=("Trebuchet MS", 11, "bold"))
+        c.create_text(400, 564, text="LEFT / RIGHT MOVE   SPACE GRAB   S SHOP   R RESET",
                       fill=PALETTE["ink"], font=("Trebuchet MS", 10, "bold"))
 
 

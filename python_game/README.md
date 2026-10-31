@@ -57,6 +57,11 @@ open while you play. Close the game window when you are done.
 - Hold **Left Arrow** or **Right Arrow** to move the claw over the toys.
 - Press **Space** to lower the claw and try to pick up a toy.
 - Each toy delivered to the chute earns one point.
+- Every completed claw attempt earns **3 coins**, even if the claw misses or
+  throws the toy. Your coin total appears beside your score.
+- Press **S** between rounds to open the prize shop. Press **1**, **2**, or
+  **3** to buy an item, then **S** or **Esc** to close the shop. Bought items
+  are added to your in-game collection.
 - Press **R** to start a new game and reset your score.
 
 ## If it does not start
@@ -82,6 +87,7 @@ Linux systems Tkinter is a separate package; for Debian or Ubuntu, run
 
 - **Left / Right arrows**: move the claw while it is at the top
 - **Space**: lower the claw and try to grab the nearest prize
+- **S**: open the shop between rounds; **1 / 2 / 3** buys a listed item
 - If the claw picks up a prize, there is a 30% chance it throws it back into
   the machine instead.
 - **R**: start a fresh game
