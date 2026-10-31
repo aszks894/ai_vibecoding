@@ -38,9 +38,12 @@ class ClawMachine:
 
         self.score = 0
         self.coins = 0
-        self.round_reward = 3
+        self.round_reward = 10
+        self.round_number = 1
         self.store_open = False
-        self.store_message = "Press 1, 2, or 3 to buy a prize."
+        self.store_view = "shop"
+        self.collection_page = 0
+        self.store_message = "Choose a prize with 1, 2, or 3."
         self.collection: list[str] = []
         self.store_items = [
             {"name": "Labubu plush", "price": 12, "color": "#9ed6a5", "symbol": "☺"},
@@ -66,6 +69,10 @@ class ClawMachine:
         self.root.bind("<space>", self.drop_claw)
         self.root.bind("s", self.toggle_store)
         self.root.bind("S", self.toggle_store)
+        self.root.bind("c", self.open_collection)
+        self.root.bind("C", self.open_collection)
+        self.root.bind("[", lambda _event: self.change_collection_page(-1))
+        self.root.bind("]", lambda _event: self.change_collection_page(1))
         self.root.bind("<Escape>", self.close_store)
         for item_key in ("1", "2", "3"):
             self.root.bind(item_key, lambda _event, key=item_key: self.buy_item(int(key) - 1))
@@ -126,7 +133,23 @@ class ClawMachine:
             self.message = "Wait for the round to finish before shopping."
             return
         self.store_open = not self.store_open
-        self.store_message = "Press 1, 2, or 3 to buy a prize."
+        self.store_view = "shop"
+        self.store_message = "Choose a prize with 1, 2, or 3."
+        self.draw()
+
+    def open_collection(self, _event: tk.Event | None = None) -> None:
+        if self.claw_state != "ready":
+            self.message = "Finish this round before opening the collection."
+            return
+        self.store_open = True
+        self.store_view = "collection"
+        self.draw()
+
+    def change_collection_page(self, direction: int) -> None:
+        if not self.store_open or self.store_view != "collection":
+            return
+        max_page = max(0, (len(self.collection) - 1) // 9)
+        self.collection_page = max(0, min(max_page, self.collection_page + direction))
         self.draw()
 
     def close_store(self, _event: tk.Event | None = None) -> None:
@@ -135,17 +158,18 @@ class ClawMachine:
             self.draw()
 
     def buy_item(self, item_index: int) -> None:
-        if not self.store_open:
+        if not self.store_open or self.store_view != "shop":
             return
         item = self.store_items[item_index]
         price = int(item["price"])
         name = str(item["name"])
         if self.coins < price:
-            self.store_message = f"Need {price - self.coins} more coins for {name}."
+            self.store_message = f"Need {price - self.coins} more coins to buy {name}."
         else:
             self.coins -= price
             self.collection.append(name)
-            self.store_message = f"Bought {name}! It's in your collection."
+            self.collection_page = (len(self.collection) - 1) // 9
+            self.store_message = f"Bought {name}! Open Collection to see it."
         self.draw()
 
     def tick(self) -> None:
@@ -171,15 +195,15 @@ class ClawMachine:
                         self.yeet_vx = random.choice([-1, 1]) * random.uniform(4.0, 6.0)
                         self.yeet_vy = random.uniform(-8.0, -6.5)
                         self.yeet_bounces = 0
-                        self.message = "skill issue"
+                        self.message = "The claw tossed the toy! Try again."
                         self.claw_state = "yeeting"
                     else:
                         self.carrying = self.target
-                        self.message = "You got something(no you didnt this is pixels)"
+                        self.message = "Toy grabbed! Delivering it to the chute."
                         self.claw_state = "raising"
                 else:
                     self.carrying = None
-                    self.message = "u suck haha"
+                    self.message = "No toy grabbed. Move over a prize and retry."
                     self.claw_state = "raising"
         elif self.claw_state == "raising":
             self.claw_y = max(175, self.claw_y - 7)
@@ -188,8 +212,6 @@ class ClawMachine:
                     self.claw_state = "returning"
                 else:
                     self.claw_state = "ready"
-                    self.coins += self.round_reward
-                    self.message = f"Round complete! +{self.round_reward} coins. Press S to shop."
         elif self.claw_state == "returning":
             self.claw_x += 7
             if self.claw_x >= 690:
@@ -200,7 +222,13 @@ class ClawMachine:
             if self.claw_y >= 515:
                 self.carrying = None
                 self.score += 1
-                self.message = "here u go"
+                if not self.prizes:
+                    self.coins += self.round_reward
+                    self.message = f"Round {self.round_number} cleared! +{self.round_reward} coins. New pile!"
+                    self.round_number += 1
+                    self.prizes = self._make_prizes()
+                else:
+                    self.message = "Toy delivered! Keep clearing the prize pile."
                 self.claw_state = "raising"
         elif self.claw_state == "yeeting":
             if self.yeeting:
@@ -322,7 +350,7 @@ class ClawMachine:
 
         # Control panel.
         c.create_rectangle(83, 525, 717, 551, fill=PALETTE["mint"], outline="")
-        status = self.message if len(self.message) <= 40 else self.message[:37] + "..."
+        status = self.message
         c.create_text(98, 538, text=status, anchor="w", fill=PALETTE["ink"],
                       font=("Trebuchet MS", 10, "bold"))
         c.create_text(558, 539, text=f"COINS {self.coins}", anchor="e", fill=PALETTE["ink"],
