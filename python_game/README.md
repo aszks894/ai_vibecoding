@@ -57,7 +57,7 @@ open while you play. Close the game window when you are done.
 - Hold **Left Arrow** or **Right Arrow** to move the claw over the toys.
 - Press **Space** to lower the claw and try to pick up a toy.
 - Each toy delivered to the chute earns one point.
-- Clear every toy from the machine to finish a round and earn **10 coins**.
+- Clear every toy from the machine to finish a round and earn **1 coin**.
   Misses and tossed toys do not pay coins. Your total appears beside your score.
 - Press **S** to open the prize shop. Press **1**, **2**, or **3** to buy one
   of the illustrated prizes.

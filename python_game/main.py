@@ -38,7 +38,7 @@ class ClawMachine:
 
         self.score = 0
         self.coins = 0
-        self.round_reward = 10
+        self.round_reward = 1
         self.round_number = 1
         self.store_open = False
         self.store_view = "shop"
@@ -46,9 +46,9 @@ class ClawMachine:
         self.store_message = "Choose a prize with 1, 2, or 3."
         self.collection: list[str] = []
         self.store_items = [
-            {"name": "Labubu plush", "price": 12, "color": "#9ed6a5", "symbol": "☺"},
-            {"name": "Pastel star plush", "price": 8, "color": "#f3c9dc", "symbol": "★"},
-            {"name": "Lucky prize capsule", "price": 5, "color": "#c8b4e8", "symbol": "?"},
+            {"name": "plush", "price": 12, "color": "#9ec0d6", "symbol": "🐻‍❄️"},
+            {"name": "star plush", "price": 8, "color": "#9ec0d6", "symbol": "★"},
+            {"name": "random shi", "price": 5, "color": "#9ec0d6", "symbol": "?"},
         ]
         self.claw_x = 390
         self.claw_y = 175
@@ -324,7 +324,7 @@ class ClawMachine:
         c = self.canvas
         name = str(item["name"])
         color = str(item["color"])
-        if name == "Labubu plush":
+        if name == "plush":
             c.create_polygon(x - 17 * scale, y - 12 * scale,
                              x - 21 * scale, y - 31 * scale,
                              x - 7 * scale, y - 21 * scale,
