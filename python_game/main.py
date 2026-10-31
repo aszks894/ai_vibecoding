@@ -168,12 +168,12 @@ class ClawMachine:
         price = int(item["price"])
         name = str(item["name"])
         if self.coins < price:
-            self.store_message = f"Need {price - self.coins} more coins to buy {name}."
+            self.store_message = f"Need {price - self.coins} more coins to buy {name} why so broke"
         else:
             self.coins -= price
             self.collection.append(name)
             self.collection_page = (len(self.collection) - 1) // 9
-            self.store_message = f"Bought {name}! Open Collection to see it."
+            self.store_message = f"u bought {name} open ur collection to see it"
         self.draw()
 
     def tick(self) -> None:
@@ -296,7 +296,7 @@ class ClawMachine:
         c = self.canvas
         total = len(self.collection)
         pages = max(1, (total + 8) // 9)
-        c.create_text(400, 155, text="YOUR COLLECTION", fill=PALETTE["ink"],
+        c.create_text(400, 155, text="collection", fill=PALETTE["ink"],
                       font=("Trebuchet MS", 23, "bold"))
         c.create_text(400, 183, text=f"{total} prize{'s' if total != 1 else ''} collected",
                       fill=PALETTE["ink"], font=("Trebuchet MS", 12, "bold"))
@@ -313,7 +313,7 @@ class ClawMachine:
             c.create_text(x, y + 37, text=name, fill=PALETTE["ink"],
                           font=("Trebuchet MS", 9, "bold"))
         if not shown:
-            c.create_text(400, 315, text="Collection is empty. Buy a prize in the shop!",
+            c.create_text(400, 315, text="hey broke person",
                           fill=PALETTE["ink"], font=("Trebuchet MS", 12, "bold"))
         c.create_text(400, 464, text=f"Page {self.collection_page + 1} of {pages}   |   {total} total prizes",
                       fill=PALETTE["ink"], font=("Trebuchet MS", 10, "bold"))
