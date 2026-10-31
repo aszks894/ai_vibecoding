@@ -43,6 +43,9 @@ class ClawMachine:
         self.claw_state = "ready"
         self.target: dict[str, object] | None = None
         self.carrying: dict[str, object] | None = None
+        self.yeeting: dict[str, object] | None = None
+        self.yeet_vx = 0.0
+        self.yeet_vy = 0.0
         self.prizes = self._make_prizes()
         self.held: set[str] = set()
         self.root.bind("<KeyPress-Left>", lambda _event: self.held.add("left"))
@@ -99,13 +102,21 @@ class ClawMachine:
                 nearby = [p for p in self.prizes if abs(float(p["x"]) - self.claw_x) < 52]
                 self.target = min(nearby, key=lambda p: abs(float(p["x"]) - self.claw_x)) if nearby else None
                 if self.target:
-                    self.carrying = self.target
                     self.prizes.remove(self.target)
-                    self.message = "You got something(no you didnt this is pixels)"
+                    if random.random() < 0.62:
+                        self.yeeting = self.target
+                        self.yeet_vx = random.choice([-1, 1]) * random.uniform(5.0, 9.0)
+                        self.yeet_vy = random.uniform(-10.0, -6.0)
+                        self.message = "YEET! That toy had other plans!"
+                        self.claw_state = "yeeting"
+                    else:
+                        self.carrying = self.target
+                        self.message = "You got something(no you didnt this is pixels)"
+                        self.claw_state = "raising"
                 else:
                     self.carrying = None
                     self.message = "u suck haha"
-                self.claw_state = "raising"
+                    self.claw_state = "raising"
         elif self.claw_state == "raising":
             self.claw_y = max(175, self.claw_y - 7)
             if self.claw_y <= 175:
@@ -122,6 +133,19 @@ class ClawMachine:
                 self.score += 1
                 self.message = "here u go"
                 self.claw_state = "raising"
+        elif self.claw_state == "yeeting":
+            if self.yeeting:
+                self.yeet_vy += 0.45
+                self.yeeting["x"] = max(105, min(695, float(self.yeeting["x"]) + self.yeet_vx))
+                self.yeeting["y"] = float(self.yeeting["y"]) + self.yeet_vy
+                if float(self.yeeting["y"]) >= 475:
+                    self.yeeting["y"] = 475
+                    self.yeet_vy *= -0.45
+                    self.yeet_vx *= 0.65
+                    if abs(self.yeet_vy) < 2:
+                        self.prizes.append(self.yeeting)
+                        self.yeeting = None
+                        self.claw_state = "raising"
 
         self.draw()
         self.root.after(25, self.tick)
@@ -180,6 +204,8 @@ class ClawMachine:
 
         for prize in self.prizes:
             self.draw_prize(prize)
+        if self.yeeting:
+            self.draw_prize(self.yeeting)
         if self.carrying:
             self.draw_prize(self.carrying, self.claw_x, self.claw_y + 38)
         self.draw_claw()
