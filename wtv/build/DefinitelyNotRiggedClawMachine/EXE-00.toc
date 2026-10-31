@@ -86,9 +86,9 @@
   ('VCRUNTIME140.dll', 'c:\\python314\\VCRUNTIME140.dll', 'BINARY'),
   ('libssl-3.dll', 'c:\\python314\\DLLs\\libssl-3.dll', 'BINARY'),
   ('libcrypto-3.dll', 'c:\\python314\\DLLs\\libcrypto-3.dll', 'BINARY'),
-  ('tcl90.dll', 'c:\\python314\\DLLs\\tcl90.dll', 'BINARY'),
-  ('tcl9tk90.dll', 'c:\\python314\\DLLs\\tcl9tk90.dll', 'BINARY'),
   ('libtommath.dll', 'c:\\python314\\DLLs\\libtommath.dll', 'BINARY'),
+  ('tcl9tk90.dll', 'c:\\python314\\DLLs\\tcl9tk90.dll', 'BINARY'),
+  ('tcl90.dll', 'c:\\python314\\DLLs\\tcl90.dll', 'BINARY'),
   ('zlib1.dll', 'c:\\python314\\DLLs\\zlib1.dll', 'BINARY'),
   ('base_library.zip',
    'C:\\vibecoding '
@@ -97,7 +97,7 @@
  [],
  False,
  False,
- 1793410331,
+ 1793410826,
  [('runw.exe',
    'C:\\vibecoding '
    'thing\\ai_vibecoding\\.venv\\Lib\\site-packages\\PyInstaller\\bootloader\\Windows-64bit-intel\\runw.exe',
