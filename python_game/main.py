@@ -107,7 +107,7 @@ class ClawMachine:
                         self.yeeting = self.target
                         self.yeet_vx = random.choice([-1, 1]) * random.uniform(5.0, 9.0)
                         self.yeet_vy = random.uniform(-10.0, -6.0)
-                        self.message = "YEET! That toy had other plans!"
+                        self.message = "bye"
                         self.claw_state = "yeeting"
                     else:
                         self.carrying = self.target
