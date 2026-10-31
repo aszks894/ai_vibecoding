@@ -28,7 +28,7 @@ class ClawMachine:
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("Pastel Pocket Claw")
+        self.root.title("Ur Not Gonna Win")
         self.root.resizable(False, False)
         self.canvas = tk.Canvas(
             root, width=WIDTH, height=HEIGHT, bg=PALETTE["cream"],
@@ -162,7 +162,7 @@ class ClawMachine:
         c.create_rectangle(35, 24, 765, 576, fill=PALETTE["pink"], outline="")
         c.create_rectangle(49, 38, 751, 562, fill=PALETTE["cream"], outline="")
         c.create_rectangle(72, 50, 728, 110, fill=PALETTE["lavender"], outline="")
-        c.create_text(400, 80, text="✦  PASTEL POCKET CLAW  ✦", fill=PALETTE["white"],
+        c.create_text(400, 80, text="definently not rigged claw machine", fill=PALETTE["white"],
                       font=("Trebuchet MS", 23, "bold"))
 
         # Glass playfield.
