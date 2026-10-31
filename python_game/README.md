@@ -3,38 +3,73 @@
 A tiny virtual claw machine game written in Python with Tkinter. Collect the
 soft, colorful prizes and see how many you can deliver to the chute.
 
-## Install
+## Install and play (Windows)
 
-1. Install Python 3.10 or newer from [python.org](https://www.python.org/downloads/).
-   On Windows, enable **Add Python to PATH** in the installer.
-2. Download or clone this project, then open a terminal in the `python_game`
-   folder (the folder containing `main.py`).
-3. Check that Python is available:
+These steps assume you have never used Python before. You do not need to learn
+Python or type any Python code to play.
 
-   ```bash
-   python --version
-   ```
+### 1. Install Python
 
-   On macOS or Linux, use `python3 --version` if `python` is not recognized.
-4. Check Tkinter by running `python -m tkinter` (or `python3 -m tkinter`). A
-   small Tk window should appear. Close it to continue. Tkinter is included in
-   most Python installers and no other packages are needed.
+1. Click [Download Python](https://www.python.org/downloads/) and download the
+   latest Python 3 release for Windows.
+2. Open the downloaded file. In the installer, check **Add python.exe to PATH**
+   near the bottom of the first screen.
+3. Click **Install Now** and wait for setup to finish. If Windows asks whether
+   to allow the installer to make changes, choose **Yes**.
 
-If the Tkinter check fails on Debian or Ubuntu, install it with
-`sudo apt install python3-tk`. On macOS, use the official python.org installer
-if your Python distribution does not include Tkinter. On Windows, rerun the
-Python installer and ensure **Tcl/Tk and IDLE** is selected.
+### 2. Find the game folder
 
-## Run
+The game is the folder named `python_game`. It must contain the file `main.py`.
+If you are looking at this README in your project, open that `python_game`
+folder in File Explorer.
 
-From the `python_game` folder, launch the game:
+### 3. Open a command window in that folder
 
-```bash
-python main.py
+1. In File Explorer, open the `python_game` folder (the one containing
+   `main.py`).
+2. At the very top of the File Explorer window, find the long box showing where
+   you are. It may say something like `This PC > ... > python_game`. Click that
+   box once. The words should turn into a folder path, such as
+   `C:\Users\YourName\...\python_game`.
+3. Type `powershell` (this replaces the path in the box) and press **Enter**.
+   A blue or black command window opens already pointed at the game folder.
+
+### 4. Start the game
+
+In that command window, type this line and press **Enter**:
+
+```text
+py main.py
 ```
 
-If your system uses `python3`, run `python3 main.py` instead. The game opens in
-a window; keep the terminal open while playing.
+A window titled **Pastel Pocket Claw** should appear. Leave the command window
+open while you play. Close the game window when you are done.
+
+## Playing
+
+- Hold **Left Arrow** or **Right Arrow** to move the claw over the toys.
+- Press **Space** to lower the claw and try to pick up a toy.
+- Each toy delivered to the chute earns one point.
+- Press **R** to start a new game and reset your score.
+
+## If it does not start
+
+- If you see **'py' is not recognized**, install Python again and make sure
+  **Add python.exe to PATH** is checked, then close and reopen the command
+  window.
+- If the command window says it cannot find `main.py`, you opened the wrong
+  folder. Go back to File Explorer and open the `python_game` folder that
+  contains `main.py`, then repeat step 3.
+- If a Python or Tkinter error appears, copy the full error text and ask for
+  help. Tkinter is normally included with the Windows Python installer, so
+  there is no separate game package to install.
+
+## macOS or Linux
+
+Install Python 3 from [python.org](https://www.python.org/downloads/), then
+open a Terminal in the `python_game` folder and run `python3 main.py`. On some
+Linux systems Tkinter is a separate package; for Debian or Ubuntu, run
+`sudo apt install python3-tk` in Terminal first.
 
 ## Controls
 
