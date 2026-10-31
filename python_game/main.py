@@ -10,16 +10,16 @@ WIDTH = 800
 HEIGHT = 600
 PALETTE = {
     "ink": "#55465e",
-    "pink": "#f6b9cf",
-    "pink_dark": "#e994b5",
-    "lavender": "#c9b9ed",
-    "blue": "#b9e2ed",
-    "mint": "#bde8d3",
+    "pink": "#d3edf3",
+    "pink_dark": "#94c0e9",
+    "lavender": "#b2c8e4",
+    "blue": "#b8d5dd",
+    "mint": "#bddae8",
     "cream": "#fff8ed",
     "glass": "#f5fbff",
-    "gold": "#f4cd75",
+    "gold": "#75b0f4",
     "white": "#ffffff",
-    "shadow": "#dfd3e4",
+    "shadow": "#56595a",
 }
 
 
@@ -101,10 +101,10 @@ class ClawMachine:
                 if self.target:
                     self.carrying = self.target
                     self.prizes.remove(self.target)
-                    self.message = "Got one! Bringing it to the prize chute…"
+                    self.message = "You got something(no you didnt this is pixels)"
                 else:
                     self.carrying = None
-                    self.message = "So close! Try lining up over a toy."
+                    self.message = "u suck haha"
                 self.claw_state = "raising"
         elif self.claw_state == "raising":
             self.claw_y = max(175, self.claw_y - 7)
@@ -120,7 +120,7 @@ class ClawMachine:
             if self.claw_y >= 515:
                 self.carrying = None
                 self.score += 1
-                self.message = "A tiny treasure for you! Keep playing ✨"
+                self.message = "here u go"
                 self.claw_state = "raising"
 
         self.draw()
