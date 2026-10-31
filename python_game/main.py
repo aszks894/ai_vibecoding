@@ -68,13 +68,27 @@ class ClawMachine:
         ]
         for _ in range(13):
             color, symbol = random.choice(choices)
+            size = random.randint(22, 29)
+            # Try random positions, accepting only spots with room around them.
+            for _attempt in range(100):
+                x = random.randint(114 + size, 686 - size)
+                y = random.randint(405 + size, 468)
+                spaced_out = all(
+                    ((x - float(other["x"])) ** 2 + (y - float(other["y"])) ** 2)
+                    >= (size + int(other["size"]) + 3) ** 2
+                    for other in prizes
+                )
+                if spaced_out:
+                    break
+            else:
+                # If the playfield is crowded, skip this toy rather than overlap it.
+                continue
             prizes.append({
-                # Keep the full toy, including its edge, inside the glass.
-                "x": random.randint(114, 686),
-                "y": random.randint(405, 467),
+                "x": x,
+                "y": y,
                 "color": color,
                 "symbol": symbol,
-                "size": random.randint(22, 29),
+                "size": size,
             })
         return prizes
 

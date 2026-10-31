@@ -8,6 +8,8 @@ toy instead.
 
 ![Screenshot of the claw machine game with the claw above a pile of prizes](screenshots/gameplay.svg)
 
+![Screenshot showing a prize being tossed back into the machine](screenshots/toss.svg)
+
 ## Install and play (Windows)
 
 These steps assume you have never used Python before. You do not need to learn
