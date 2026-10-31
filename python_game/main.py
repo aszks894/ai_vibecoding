@@ -60,7 +60,7 @@ class ClawMachine:
         prizes = []
         choices = [
             ("#517BB3", "★"), ("#7ab0e2", "★"), ("#5d7aa5", "★"),
-            ("#3843a3", "★"), ("#0b488d", "★"), ("#7cb1ff", "★"),
+            ("#8fb2da", "★"), ("#4f7eb3", "★"), ("#7cb1ff", "★"),
         ]
         for _ in range(13):
             color, symbol = random.choice(choices)
