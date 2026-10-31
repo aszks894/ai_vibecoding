@@ -59,8 +59,8 @@ class ClawMachine:
     def _make_prizes() -> list[dict[str, object]]:
         prizes = []
         choices = [
-            ("#f3a9c2", "♥"), ("#b9d7f4", "★"), ("#a9ddc7", "●"),
-            ("#d3b9ed", "✿"), ("#f4ce79", "★"), ("#f2b893", "♥"),
+            ("#517BB3", "★"), ("#7ab0e2", "★"), ("#5d7aa5", "★"),
+            ("#3843a3", "★"), ("#0b488d", "★"), ("#7cb1ff", "★"),
         ]
         for _ in range(13):
             color, symbol = random.choice(choices)
@@ -85,7 +85,7 @@ class ClawMachine:
         if self.claw_state == "ready":
             self.claw_state = "lowering"
             self.target = None
-            self.message = "Down, down, down…"
+            self.message = "try to get smth (u probably wont i rigged the machine)"
 
     def tick(self) -> None:
         if self.claw_state == "ready":
