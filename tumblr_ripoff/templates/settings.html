@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="settings-card">
+    <h1>Settings</h1>
+    <p class="muted">Update your account details and password.</p>
+
+    <form method="POST" class="stack-form">
+        <label>
+            <span>Current Password</span>
+            <input type="password" name="old_password" placeholder="••••••••">
+        </label>
+
+        <label>
+            <span>New Password</span>
+            <input type="password" name="new_password" placeholder="New password">
+        </label>
+
+        <label>
+            <span>Confirm New Password</span>
+            <input type="password" name="confirm_password" placeholder="Confirm new password">
+        </label>
+
+        <button type="submit" class="primary-btn">Update Password</button>
+    </form>
+</section>
+{% endblock %}

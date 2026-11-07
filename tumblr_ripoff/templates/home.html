@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="feed-layout">
+    <aside class="side-panel">
+        <div class="profile-card">
+            {% set avatar = current_user.profile_photo if current_user and current_user.profile_photo else 'default_avatar.svg' %}
+            <img src="{{ url_for('static', filename=avatar) }}" alt="Profile photo" class="mini-avatar">
+            <h2>{{ current_user.nickname if current_user else 'Guest' }}</h2>
+            <p>@{{ current_user.username if current_user else 'guest' }}</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('create_post') }}" class="composer" enctype="multipart/form-data">
+            <textarea name="content" rows="4" placeholder="What’s on your mind?"></textarea>
+            <label class="upload-label">
+                <span>Attach image</span>
+                <input type="file" name="image" accept="image/*">
+            </label>
+            <button type="submit" class="primary-btn full">Post</button>
+        </form>
+    </aside>
+
+    <section class="feed-column">
+        {% for post in posts %}
+        <article class="post-card">
+            <div class="post-header">
+                <div class="user-pill">
+                    <img src="{{ url_for('static', filename=post.profile_photo or 'default_avatar.svg') }}" alt="Avatar" class="tiny-avatar">
+                    <div>
+                        <strong>{{ post.nickname }}</strong>
+                        <small>@{{ post.username }}</small>
+                    </div>
+                </div>
+                <span class="timestamp">{{ post.created_at }}</span>
+            </div>
+
+            {% if post.content %}
+            <p class="post-body">{{ post.content }}</p>
+            {% endif %}
+
+            {% if post.image_path %}
+            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image" class="post-image">
+            {% endif %}
+        </article>
+        {% else %}
+        <div class="empty-state">
+            <h3>No posts yet</h3>
+            <p>Be the first to share a new moment.</p>
+        </div>
+        {% endfor %}
+    </section>
+</section>
+{% endblock %}

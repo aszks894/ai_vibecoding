@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="profile-layout">
+    <div class="profile-card large">
+        <img src="{{ url_for('static', filename=current_user.profile_photo or 'default_avatar.svg') }}" alt="Profile photo" class="profile-avatar">
+        <h1>{{ current_user.nickname }}</h1>
+        <p>@{{ current_user.username }}</p>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" class="stack-form profile-form">
+        <label>
+            <span>Username</span>
+            <input type="text" name="username" value="{{ current_user.username }}" required>
+        </label>
+
+        <label>
+            <span>Nickname</span>
+            <input type="text" name="nickname" value="{{ current_user.nickname }}" required>
+        </label>
+
+        <label>
+            <span>Profile Photo</span>
+            <input type="file" name="profile_photo" accept="image/*">
+        </label>
+
+        <button type="submit" class="primary-btn">Save Profile</button>
+    </form>
+</section>
+{% endblock %}

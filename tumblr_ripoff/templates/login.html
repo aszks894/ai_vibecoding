@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="auth-card">
+    <div class="auth-panel">
+        <h1>hi</h1>
+        <p class="muted">Log in</p>
+
+        <form method="POST" class="stack-form">
+            <label>
+                <span>Username</span>
+                <input type="text" name="username" placeholder="yourname" required>
+            </label>
+
+            <label>
+                <span>Password</span>
+                <input type="password" name="password" placeholder="••••••••" required>
+            </label>
+
+            <button type="submit" class="primary-btn">Log In</button>
+        </form>
+
+        <div class="auth-foot">
+            No account yet? <a href="{{ url_for('register') }}">Create one</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
