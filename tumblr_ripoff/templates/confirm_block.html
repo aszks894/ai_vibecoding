@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="empty-state block-confirmation">
+    <h1>Are you sure you want to block @{{ target.username }}?</h1>
+    <p>Blocking means:</p>
+    <ul>
+        <li>You and @{{ target.username }} will not be able to message each other.</li>
+        <li>You will not see each other's posts or profiles.</li>
+    </ul>
+    <div class="profile-actions">
+        <form method="POST" action="{{ url_for('toggle_block', target_id=target.id) }}">
+            <button class="small-button" type="submit">Block @{{ target.username }}</button>
+        </form>
+        <a class="small-button secondary-button" href="{{ cancel_url }}">Cancel</a>
+    </div>
+</section>
+{% endblock %}

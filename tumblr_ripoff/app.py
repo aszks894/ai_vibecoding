@@ -1,6 +1,7 @@
 import os
 import re
 import sqlite3
+import unicodedata
 from functools import wraps
 from urllib.parse import urlparse
 from werkzeug.utils import secure_filename
@@ -17,10 +18,13 @@ app = Flask(__name__)
 app.config["SECRET_KEY"] = "nostalgic-blog-secret"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
-REACTION_EMOJIS = ("❤️", "😂", "😮", "😢", "👏")
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp"}
 VIDEO_EXTENSIONS = {"mp4", "webm", "mov", "ogg"}
 HASHTAG_PATTERN = re.compile(r"(?<![\w&])#([\w]{1,50})", re.UNICODE)
+EMOJI_CODEPOINT_PATTERN = re.compile(
+    r"[\U0001F000-\U0001FAFF\u2300-\u23FF\u2600-\u27BF"
+    r"\u00A9\u00AE\u203C\u2049\u2122\u2139\u3030\u303D\u3297\u3299]"
+)
 
 os.makedirs(os.path.join(UPLOAD_FOLDER, "profile_photos"), exist_ok=True)
 os.makedirs(os.path.join(UPLOAD_FOLDER, "posts"), exist_ok=True)
@@ -287,6 +291,30 @@ def extract_hashtags(content):
     return {match.group(1).casefold() for match in HASHTAG_PATTERN.finditer(content or "")}
 
 
+def normalize_reaction_emoji(value):
+    emoji = (value or "").strip()
+    if not emoji or len(emoji) > 32:
+        return None
+
+    if not EMOJI_CODEPOINT_PATTERN.search(emoji) and "\u20e3" not in emoji:
+        return None
+
+    for character in emoji:
+        codepoint = ord(character)
+        if EMOJI_CODEPOINT_PATTERN.fullmatch(character):
+            continue
+        if codepoint in {0xFE0E, 0xFE0F, 0x200D, 0x20E3, 0xE007F}:
+            continue
+        if 0xE0020 <= codepoint <= 0xE007E:
+            continue
+        if "\u20e3" in emoji and character in "#*0123456789":
+            continue
+        if unicodedata.category(character) in {"Mn", "Me"}:
+            continue
+        return None
+    return emoji
+
+
 def save_upload(file, folder):
     if file is None or not file.filename:
         return None
@@ -483,10 +511,55 @@ def post_ranking_sql():
                 SELECT 1 FROM follows
                 WHERE follows.follower_id = ? AND follows.followed_id = posts.user_id
             ) THEN 6.0 ELSE 0.0 END
+            + MIN(
+                (SELECT COUNT(*)
+                 FROM likes
+                 JOIN posts AS liked_posts ON liked_posts.id = likes.post_id
+                 WHERE likes.user_id = ? AND liked_posts.user_id = posts.user_id)
+                + (SELECT COUNT(*)
+                   FROM comments
+                   JOIN posts AS commented_posts ON commented_posts.id = comments.post_id
+                   WHERE comments.user_id = ? AND commented_posts.user_id = posts.user_id)
+                + (SELECT COUNT(*)
+                   FROM reactions
+                   JOIN posts AS reacted_posts ON reacted_posts.id = reactions.post_id
+                   WHERE reactions.user_id = ? AND reacted_posts.user_id = posts.user_id),
+                6
+            ) * 1.5
+            + MIN(
+                (SELECT COUNT(*)
+                 FROM post_hashtags AS candidate_tags
+                 WHERE candidate_tags.post_id = posts.id
+                   AND EXISTS (
+                       SELECT 1
+                       FROM post_hashtags AS history_tags
+                       JOIN posts AS history_posts ON history_posts.id = history_tags.post_id
+                       WHERE history_tags.tag = candidate_tags.tag
+                         AND (
+                             EXISTS (
+                                 SELECT 1 FROM likes
+                                 WHERE likes.user_id = ? AND likes.post_id = history_posts.id
+                             )
+                             OR EXISTS (
+                                 SELECT 1 FROM comments
+                                 WHERE comments.user_id = ? AND comments.post_id = history_posts.id
+                             )
+                             OR EXISTS (
+                                 SELECT 1 FROM reactions
+                                 WHERE reactions.user_id = ? AND reactions.post_id = history_posts.id
+                             )
+                         )
+                   )),
+                4
+            ) * 3.0
         ) / (
             1.0 + MAX(0.0, (julianday('now') - julianday(posts.created_at)) * 24.0) / 18.0
         )
     """
+
+
+def post_select_params(user_id, *remaining_params):
+    return (user_id,) * 8 + remaining_params
 
 
 def post_select_sql():
@@ -594,7 +667,13 @@ def home():
           AND {private_post_filter_sql()}
         ORDER BY ranking_score DESC, posts.created_at DESC
         """,
-        (user["id"], user["id"], user["id"], user["id"], user["id"], user["id"]),
+        post_select_params(
+            user["id"],
+            user["id"],
+            user["id"],
+            user["id"],
+            user["id"],
+        ),
         user["id"],
     )
     return render_template(
@@ -796,9 +875,9 @@ def delete_comment(comment_id):
 @login_required
 def toggle_reaction(post_id):
     user = get_current_user()
-    emoji = request.form.get("emoji", "")
-    if emoji not in REACTION_EMOJIS:
-        flash("That reaction is not supported.", "warning")
+    emoji = normalize_reaction_emoji(request.form.get("emoji", ""))
+    if emoji is None:
+        flash("Enter a valid emoji reaction.", "warning")
         return redirect(safe_referrer(url_for("home")))
 
     db = get_db()
@@ -913,8 +992,7 @@ def hashtag_feed(tag):
           AND {private_post_filter_sql()}
         ORDER BY ranking_score DESC, posts.created_at DESC
         """,
-        (
-            user["id"],
+        post_select_params(
             user["id"],
             normalized_tag,
             user["id"],
@@ -1048,7 +1126,12 @@ def friends():
               AND {blocked_post_filter_sql()}
             ORDER BY posts.created_at DESC
             """,
-            (user["id"], user["id"], friend["id"], user["id"], user["id"]),
+            post_select_params(
+                user["id"],
+                friend["id"],
+                user["id"],
+                user["id"],
+            ),
             user["id"],
         )
         friends_with_posts.append(person)
@@ -1120,7 +1203,7 @@ def user_profile(username):
             WHERE posts.user_id = ?
             ORDER BY posts.created_at DESC
             """,
-            (user["id"], user["id"], viewed_user["id"]),
+            post_select_params(user["id"], viewed_user["id"]),
             user["id"],
         )
     return render_template(
@@ -1749,6 +1832,35 @@ def conversation(target_id):
     )
 
 
+@app.route("/users/<int:target_id>/block/confirm")
+@login_required
+def confirm_block(target_id):
+    user = get_current_user()
+    db = get_db()
+    target = db.execute(
+        "SELECT id, username, nickname FROM users WHERE id = ?",
+        (target_id,),
+    ).fetchone()
+    if target is None or target_id == user["id"]:
+        flash("That account cannot be blocked.", "warning")
+        return redirect(safe_referrer(url_for("people")))
+
+    existing = db.execute(
+        "SELECT 1 FROM blocks WHERE blocker_id = ? AND blocked_id = ?",
+        (user["id"], target_id),
+    ).fetchone()
+    if existing:
+        flash("You have already blocked that account.", "warning")
+        return redirect(safe_referrer(url_for("people")))
+
+    return render_template(
+        "confirm_block.html",
+        target=target,
+        cancel_url=safe_referrer(url_for("people")),
+        current_user=user,
+    )
+
+
 @app.route("/users/<int:target_id>/block", methods=["POST"])
 @login_required
 def toggle_block(target_id):
@@ -1799,6 +1911,9 @@ def toggle_block(target_id):
             (user["id"], target_id, target_id, user["id"]),
         )
     db.commit()
+    if not existing:
+        flash("Account blocked.", "success")
+        return redirect(url_for("people"))
     return redirect(safe_referrer(url_for("people")))
 
 
@@ -2084,7 +2199,6 @@ def inject_user():
         ).fetchone()[0]
     return {
         "current_user": current_user,
-        "reaction_emojis": REACTION_EMOJIS,
         "friend_request_count": friend_request_count,
         "unread_message_count": unread_message_count,
         "notification_count": notification_count,

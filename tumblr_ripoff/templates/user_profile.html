@@ -45,7 +45,7 @@
                 {% elif viewed_user.is_private %}
                 <span class="blocked-label">Friends only can message</span>
                 {% endif %}
-                <form method="POST" action="{{ url_for('toggle_block', target_id=viewed_user.id) }}" onsubmit="return confirm('Block @{{ viewed_user.username }}? Their posts and profile will be hidden from you, and you will be unfollowed.');">
+                <form method="GET" action="{{ url_for('confirm_block', target_id=viewed_user.id) }}">
                     <button class="small-button secondary-button" type="submit">Block</button>
                 </form>
                 {% endif %}

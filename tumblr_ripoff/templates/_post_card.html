@@ -42,15 +42,26 @@
         </form>
         <a class="action-button" href="#comments-{{ post.id }}">Comment <span class="action-count">{{ post.comments|length }}</span></a>
         <div class="reaction-list" aria-label="Emoji reactions">
-            {% for emoji in reaction_emojis %}
-            {% set reaction = post.reactions.get(emoji) %}
+            {% for emoji, reaction in post.reactions.items() %}
             <form method="POST" action="{{ url_for('toggle_reaction', post_id=post.id) }}">
                 <input type="hidden" name="emoji" value="{{ emoji }}">
                 <button type="submit" class="reaction-button{% if reaction and reaction.selected %} is-selected{% endif %}" aria-label="React with {{ emoji }}" aria-pressed="{{ 'true' if reaction and reaction.selected else 'false' }}">
-                    {{ emoji }}{% if reaction %}<span>{{ reaction.count }}</span>{% endif %}
+                    {{ emoji }}<span>{{ reaction.count }}</span>
                 </button>
             </form>
             {% endfor %}
+            <details class="emoji-picker">
+                <summary aria-label="Choose an emoji reaction">＋ React</summary>
+                <div class="emoji-picker-popover">
+                    <label class="sr-only" for="emoji-search-{{ post.id }}">Search emojis</label>
+                    <input id="emoji-search-{{ post.id }}" class="emoji-search" type="search" placeholder="Search emojis">
+                    <div class="emoji-categories" aria-label="Emoji categories"></div>
+                    <div class="emoji-grid" role="group" aria-label="Choose an emoji"></div>
+                    <form method="POST" action="{{ url_for('toggle_reaction', post_id=post.id) }}" class="emoji-reaction-form">
+                        <input type="hidden" name="emoji" required>
+                    </form>
+                </div>
+            </details>
         </div>
     </div>
 

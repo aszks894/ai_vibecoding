@@ -3,7 +3,6 @@
 <section class="directory">
     <header class="directory-header">
         <h1>People</h1>
-        <p>Suggestions are based on shared follows, tags, and community activity.</p>
     </header>
 
     <div class="people-list">
@@ -42,7 +41,7 @@
                 </form>
                 {% endif %}
                 <a class="small-button secondary-button" href="{{ url_for('conversation', target_id=person.id) }}">Message</a>
-                <form method="POST" action="{{ url_for('toggle_block', target_id=person.id) }}">
+                <form method="GET" action="{{ url_for('confirm_block', target_id=person.id) }}">
                     <button class="small-button secondary-button" type="submit">Block</button>
                 </form>
                 {% endif %}
