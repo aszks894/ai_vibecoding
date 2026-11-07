@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header">
+        <h1>New message</h1>
+        <p>Search by username or name to find someone to message.</p>
+    </header>
+
+    <form method="GET" action="{{ url_for('new_message') }}" class="message-search-form">
+        <label class="sr-only" for="message-search">Search people</label>
+        <input id="message-search" type="search" name="q" value="{{ query }}" placeholder="Search people..." required>
+        <button class="primary-btn" type="submit">Search</button>
+    </form>
+
+    {% if query %}
+    <div class="people-list message-search-results">
+        {% for person in results %}
+        <article class="person-card">
+            <a class="person-info" href="{{ url_for('user_profile', username=person.username) }}">
+                <img src="{{ url_for('static', filename=person.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                <span>
+                    <strong>{{ person.nickname }}</strong>
+                    <small>@{{ person.username }}{% if person.is_private %} · Private{% endif %}</small>
+                </span>
+            </a>
+            {% if person.blocked %}
+            <span class="blocked-label">Unavailable</span>
+            {% elif person.can_message %}
+            <a class="small-button secondary-button" href="{{ url_for('conversation', target_id=person.id) }}">Message</a>
+            {% else %}
+            <span class="blocked-label">Friends only</span>
+            {% endif %}
+        </article>
+        {% else %}
+        <div class="empty-state">No accounts found.</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

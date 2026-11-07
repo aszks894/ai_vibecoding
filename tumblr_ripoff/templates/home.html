@@ -10,37 +10,29 @@
         </div>
 
         <form method="POST" action="{{ url_for('create_post') }}" class="composer" enctype="multipart/form-data">
-            <textarea name="content" rows="4" placeholder="What’s on your mind?"></textarea>
+            <label class="sr-only" for="post-content">Post text</label>
+            <textarea id="post-content" name="content" rows="4" placeholder="What’s on your mind?"></textarea>
+            <div class="hashtag-preview" aria-live="polite" aria-atomic="true">
+                <span class="hashtag-preview-label">Hashtags</span>
+                <span class="hashtag-preview-empty">Add #hashtags to your post to see them here.</span>
+                <span class="hashtag-preview-list"></span>
+            </div>
             <label class="upload-label">
-                <span>Attach image</span>
-                <input type="file" name="image" accept="image/*">
+                <span>Attach image or video</span>
+                <input type="file" name="media" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime,video/ogg">
             </label>
             <button type="submit" class="primary-btn full">Post</button>
         </form>
+
     </aside>
 
     <section class="feed-column">
+        <div class="section-head">
+            <h1>Fyp</h1>
+            <span class="feed-note">Recent posts, ranked by activity</span>
+        </div>
         {% for post in posts %}
-        <article class="post-card">
-            <div class="post-header">
-                <div class="user-pill">
-                    <img src="{{ url_for('static', filename=post.profile_photo or 'default_avatar.svg') }}" alt="Avatar" class="tiny-avatar">
-                    <div>
-                        <strong>{{ post.nickname }}</strong>
-                        <small>@{{ post.username }}</small>
-                    </div>
-                </div>
-                <span class="timestamp">{{ post.created_at }}</span>
-            </div>
-
-            {% if post.content %}
-            <p class="post-body">{{ post.content }}</p>
-            {% endif %}
-
-            {% if post.image_path %}
-            <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image" class="post-image">
-            {% endif %}
-        </article>
+        {% include "_post_card.html" %}
         {% else %}
         <div class="empty-state">
             <h3>No posts yet</h3>
@@ -49,4 +41,27 @@
         {% endfor %}
     </section>
 </section>
+<script>
+    const postContent = document.getElementById("post-content");
+    const hashtagPreview = document.querySelector(".hashtag-preview");
+    const hashtagPreviewEmpty = document.querySelector(".hashtag-preview-empty");
+    const hashtagPreviewList = document.querySelector(".hashtag-preview-list");
+    const postHashtagPattern = /(^|[^\p{L}\p{N}_&])#([\p{L}\p{N}_]{1,50})/gu;
+
+    postContent.addEventListener("input", () => {
+        const hashtags = [...postContent.value.matchAll(postHashtagPattern)]
+            .map((match) => `#${match[2]}`);
+        const uniqueHashtags = [...new Set(hashtags.map((tag) => tag.toLocaleLowerCase()))]
+            .map((tag) => hashtags.find((hashtag) => hashtag.toLocaleLowerCase() === tag));
+
+        hashtagPreviewList.replaceChildren(...uniqueHashtags.map((tag) => {
+            const chip = document.createElement("span");
+            chip.className = "hashtag-preview-chip";
+            chip.textContent = tag;
+            return chip;
+        }));
+        hashtagPreviewEmpty.hidden = uniqueHashtags.length > 0;
+        hashtagPreview.classList.toggle("has-hashtags", uniqueHashtags.length > 0);
+    });
+</script>
 {% endblock %}

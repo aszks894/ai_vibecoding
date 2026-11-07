@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header">
+        <h1>Messages</h1>
+        <p>Your private conversations.</p>
+    </header>
+
+    <div class="messages-layout">
+        <aside class="conversation-list">
+            <h2>Conversations</h2>
+            <a class="small-button secondary-button new-group-link" href="{{ url_for('new_message') }}">New message</a>
+            <a class="small-button secondary-button new-group-link" href="{{ url_for('create_group_chat') }}">New group chat</a>
+            {% if group_conversations %}
+            <h3 class="conversation-section-title">Groups</h3>
+            {% for group in group_conversations %}
+            <a class="conversation-link{% if group_target and group_target.id == group.id %} active{% endif %}"
+               href="{{ url_for('group_conversation', group_id=group.id) }}">
+                <span class="group-avatar" aria-hidden="true">G</span>
+                <span>
+                    <strong>{{ group.name }}{% if group.unread_count %} · {{ group.unread_count }}{% endif %}</strong>
+                    <small>{{ group.latest_message or 'Group chat' }}</small>
+                </span>
+            </a>
+            {% endfor %}
+            {% endif %}
+            {% if conversations %}
+            <h3 class="conversation-section-title">Direct messages</h3>
+            {% for person in conversations %}
+            <a class="conversation-link{% if target and target.id == person.id %} active{% endif %}"
+               href="{{ url_for('conversation', target_id=person.id) }}">
+                <img src="{{ url_for('static', filename=person.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                <span><strong>{{ person.nickname }}</strong><small>{{ person.latest_message }}</small></span>
+            </a>
+            {% endfor %}
+            {% endif %}
+            {% if not conversations and not group_conversations %}
+            <p class="muted conversation-empty">No conversations yet. Search for someone to start a message.</p>
+            {% endif %}
+        </aside>
+
+        <section class="message-panel">
+            {% if group_target %}
+            <header class="message-header">
+                <div>
+                    <h2>{{ group_target.name }}</h2>
+                    <p>{{ group_members|map(attribute='nickname')|join(', ') }}</p>
+                </div>
+            </header>
+            <div class="message-thread">
+                {% for message in thread %}
+                <article class="message-bubble{% if message.sender_id == current_user.id %} own-message{% endif %}">
+                    <strong>{{ 'You' if message.sender_id == current_user.id else message.nickname }}</strong>
+                    <p>{{ message.content }}</p>
+                    <time>{{ message.created_at }}</time>
+                </article>
+                {% else %}
+                <div class="empty-state">Start the group conversation.</div>
+                {% endfor %}
+            </div>
+            <form method="POST" class="message-compose">
+                <label class="sr-only" for="message-content">Message</label>
+                <textarea id="message-content" name="content" maxlength="5000" placeholder="Write a message..." required></textarea>
+                <button class="primary-btn" type="submit">Send</button>
+            </form>
+            {% elif target %}
+            <header class="message-header">
+                <div>
+                    <h2>{{ target.nickname }}</h2>
+                    <p>@{{ target.username }}</p>
+                </div>
+                <a class="small-button secondary-button" href="{{ url_for('user_profile', username=target.username) }}">View profile</a>
+            </header>
+            <div class="message-thread">
+                {% for message in thread %}
+                <article class="message-bubble{% if message.sender_id == current_user.id %} own-message{% endif %}">
+                    <strong>{{ 'You' if message.sender_id == current_user.id else message.nickname }}</strong>
+                    <p>{{ message.content }}</p>
+                    <time>{{ message.created_at }}</time>
+                </article>
+                {% else %}
+                <div class="empty-state">Start the conversation.</div>
+                {% endfor %}
+            </div>
+            <form method="POST" class="message-compose">
+                <label class="sr-only" for="message-content">Message</label>
+                <textarea id="message-content" name="content" maxlength="5000" placeholder="Write a message..." required></textarea>
+                <button class="primary-btn" type="submit">Send</button>
+            </form>
+            {% else %}
+            <div class="empty-state message-placeholder">Choose a conversation or start a new message.</div>
+            {% endif %}
+        </section>
+    </div>
+</section>
+{% endblock %}

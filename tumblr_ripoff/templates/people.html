@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="directory">
+    <header class="directory-header">
+        <h1>People</h1>
+        <p>Suggestions are based on shared follows, tags, and community activity.</p>
+    </header>
+
+    <div class="people-list">
+        {% for person in people %}
+        <article class="person-card">
+            <a class="person-info" href="{{ url_for('user_profile', username=person.username) }}">
+                <img src="{{ url_for('static', filename=person.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                <span>
+                    <strong>{{ person.nickname }}</strong>
+                    <small>@{{ person.username }} · {{ person.follower_count }} followers</small>
+                </span>
+            </a>
+            <div class="person-actions">
+                {% if person.blocked_viewer and not person.is_blocked %}
+                <span class="blocked-label">Unavailable</span>
+                {% elif person.is_blocked %}
+                <form method="POST" action="{{ url_for('toggle_block', target_id=person.id) }}">
+                    <button class="small-button secondary-button" type="submit">Unblock</button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('toggle_follow', target_id=person.id) }}">
+                    <button class="small-button" type="submit">
+                        {{ 'Following' if person.is_following else 'Follow' }}
+                    </button>
+                </form>
+                {% if person.is_friend %}<span class="friend-status">Friends</span>{% endif %}
+                {% if person.request_sent %}
+                <form method="POST" action="{{ url_for('send_friend_request', target_id=person.id) }}">
+                    <button class="small-button secondary-button" type="submit">Cancel request</button>
+                </form>
+                {% elif person.request_received %}
+                <a class="small-button secondary-button" href="{{ url_for('friend_requests') }}">Review request</a>
+                {% elif not person.is_friend %}
+                <form method="POST" action="{{ url_for('send_friend_request', target_id=person.id) }}">
+                    <button class="small-button secondary-button" type="submit">Friend request</button>
+                </form>
+                {% endif %}
+                <a class="small-button secondary-button" href="{{ url_for('conversation', target_id=person.id) }}">Message</a>
+                <form method="POST" action="{{ url_for('toggle_block', target_id=person.id) }}">
+                    <button class="small-button secondary-button" type="submit">Block</button>
+                </form>
+                {% endif %}
+            </div>
+        </article>
+        {% else %}
+        <div class="empty-state">No other accounts yet.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

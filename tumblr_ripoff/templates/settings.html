@@ -2,9 +2,30 @@
 {% block content %}
 <section class="settings-card">
     <h1>Settings</h1>
-    <p class="muted">Update your account details and password.</p>
+    <p class="muted">Manage your account, privacy, and password.</p>
 
-    <form method="POST" class="stack-form">
+    <section class="settings-section">
+        <h2>Account privacy</h2>
+        <p class="settings-description">
+            {% if current_user.is_private %}
+            Your posts are visible only to friends who follow you back.
+            {% else %}
+            Your posts are visible to everyone except accounts you have blocked.
+            {% endif %}
+        </p>
+        <form method="POST" class="privacy-form">
+            <input type="hidden" name="action" value="privacy">
+            <input type="hidden" name="is_private" value="{{ '0' if current_user.is_private else '1' }}">
+            <button type="submit" class="small-button">
+                Make account {{ 'public' if current_user.is_private else 'private' }}
+            </button>
+            <span class="privacy-status">{{ 'Private' if current_user.is_private else 'Public' }}</span>
+        </form>
+    </section>
+
+    <section class="settings-section">
+        <h2>Change password</h2>
+        <form method="POST" class="stack-form">
         <label>
             <span>Current Password</span>
             <input type="password" name="old_password" placeholder="••••••••">
@@ -21,6 +42,27 @@
         </label>
 
         <button type="submit" class="primary-btn">Update Password</button>
-    </form>
+        </form>
+    </section>
+
+    <section class="settings-section danger-zone">
+        <h2>Delete account</h2>
+        <p class="settings-description">
+            Permanently delete your account, posts, comments, uploaded media, and follow/block relationships.
+            This cannot be undone.
+        </p>
+        <form method="POST" action="{{ url_for('delete_account') }}" class="stack-form"
+              onsubmit="return confirm('Permanently delete your account and all your content? This cannot be undone.');">
+            <label>
+                <span>Current Password</span>
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <label>
+                <span>Type DELETE to confirm</span>
+                <input type="text" name="confirmation" autocomplete="off" required>
+            </label>
+            <button type="submit" class="primary-btn danger-button">Delete my account</button>
+        </form>
+    </section>
 </section>
 {% endblock %}

@@ -1,0 +1,87 @@
+<article class="post-card" id="post-{{ post.id }}">
+    <div class="post-header">
+        <div class="user-pill">
+            <img src="{{ url_for('static', filename=post.profile_photo or 'default_avatar.svg') }}" alt="Avatar" class="tiny-avatar">
+            <div>
+                <a class="post-author" href="{{ url_for('user_profile', username=post.username) }}">
+                    <strong>{{ post.nickname }}</strong>
+                    <small>@{{ post.username }}</small>
+                </a>
+            </div>
+        </div>
+        <div class="post-meta">
+            <span class="timestamp">{{ post.created_at }}</span>
+            {% if post.user_id == current_user.id %}
+            <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}" onsubmit="return confirm('Delete this post? This cannot be undone.');">
+                <button type="submit" class="text-button delete-post">Delete</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if post.content %}
+    <p class="post-body">{{ post.content | linkify_hashtags }}</p>
+    {% endif %}
+
+    {% if post.image_path %}
+        {% if post.media_type == 'video' %}
+        <video class="post-video" controls preload="metadata">
+            <source src="{{ url_for('static', filename=post.image_path) }}">
+            Your browser does not support video playback.
+        </video>
+        {% else %}
+    <img src="{{ url_for('static', filename=post.image_path) }}" alt="Post image" class="post-image">
+        {% endif %}
+    {% endif %}
+
+    <div class="post-actions">
+        <form method="POST" action="{{ url_for('toggle_like', post_id=post.id) }}">
+            <button type="submit" class="action-button{% if post.liked_by_user %} is-selected{% endif %}" aria-pressed="{{ 'true' if post.liked_by_user else 'false' }}">
+                <span aria-hidden="true">♥</span> Like <span class="action-count">{{ post.like_count }}</span>
+            </button>
+        </form>
+        <a class="action-button" href="#comments-{{ post.id }}">Comment <span class="action-count">{{ post.comments|length }}</span></a>
+        <div class="reaction-list" aria-label="Emoji reactions">
+            {% for emoji in reaction_emojis %}
+            {% set reaction = post.reactions.get(emoji) %}
+            <form method="POST" action="{{ url_for('toggle_reaction', post_id=post.id) }}">
+                <input type="hidden" name="emoji" value="{{ emoji }}">
+                <button type="submit" class="reaction-button{% if reaction and reaction.selected %} is-selected{% endif %}" aria-label="React with {{ emoji }}" aria-pressed="{{ 'true' if reaction and reaction.selected else 'false' }}">
+                    {{ emoji }}{% if reaction %}<span>{{ reaction.count }}</span>{% endif %}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+
+    <section class="comments" id="comments-{{ post.id }}" aria-label="Comments">
+        {% if post.comments %}
+        <div class="comment-list">
+            {% for comment in post.comments %}
+            <div class="comment">
+                <img src="{{ url_for('static', filename=comment.profile_photo or 'default_avatar.svg') }}" alt="" class="comment-avatar">
+                <div class="comment-content">
+                    <p><strong>{{ comment.nickname }}</strong>{% if comment.content %} {{ comment.content }}{% endif %}</p>
+                    {% if comment.image_path %}
+                    <img src="{{ url_for('static', filename=comment.image_path) }}" alt="Comment image" class="comment-image">
+                    {% endif %}
+                </div>
+                {% if comment.user_id == current_user.id %}
+                <form method="POST" action="{{ url_for('delete_comment', comment_id=comment.id) }}">
+                    <button type="submit" class="text-button delete-comment" aria-label="Delete your comment">Delete</button>
+                </form>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('add_comment', post_id=post.id) }}" class="comment-form" enctype="multipart/form-data">
+            <label class="sr-only" for="comment-{{ post.id }}">Write a comment</label>
+            <input id="comment-{{ post.id }}" type="text" name="content" maxlength="1000" placeholder="Write a comment...">
+            <label class="comment-image-upload" for="comment-image-{{ post.id }}" aria-label="Attach an image">＋
+                <input id="comment-image-{{ post.id }}" type="file" name="image" accept="image/*">
+            </label>
+            <button type="submit" class="text-button">Send</button>
+        </form>
+    </section>
+</article>

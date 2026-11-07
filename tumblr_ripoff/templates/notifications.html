@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header notification-heading">
+        <div>
+            <h1>Notifications</h1>
+            <p>Friend requests, messages, and group chat updates.</p>
+        </div>
+        {% if notifications|selectattr('read_at', 'none')|list %}
+        <form method="POST" action="{{ url_for('mark_notifications_read') }}">
+            <button type="submit" class="small-button secondary-button">Mark all as read</button>
+        </form>
+        {% endif %}
+    </header>
+
+    <div class="notification-list">
+        {% for notification in notifications %}
+        {% if notification.kind == 'friend_request' %}
+            {% set notification_url = url_for('friend_requests') %}
+            {% set notification_text = 'sent you a friend request.' %}
+        {% elif notification.kind == 'friend_accepted' and notification.actor_id %}
+            {% set notification_url = url_for('conversation', target_id=notification.actor_id) %}
+            {% set notification_text = 'accepted your friend request.' %}
+        {% elif notification.kind == 'message' and notification.actor_id %}
+            {% set notification_url = url_for('conversation', target_id=notification.actor_id) %}
+            {% set notification_text = 'sent you a message.' %}
+        {% elif notification.kind == 'group_message' %}
+            {% set notification_url = url_for('group_conversation', group_id=notification.reference_id) %}
+            {% set notification_text = 'sent a message in a group chat.' %}
+        {% elif notification.kind == 'group_invite' %}
+            {% set notification_url = url_for('group_conversation', group_id=notification.reference_id) %}
+            {% set notification_text = 'added you to a group chat.' %}
+        {% else %}
+            {% set notification_url = url_for('friends') %}
+            {% set notification_text = 'updated their account.' %}
+        {% endif %}
+        <a class="notification-item{% if not notification.read_at %} is-unread{% endif %}" href="{{ notification_url }}">
+            {% if notification.actor_photo %}
+            <img src="{{ url_for('static', filename=notification.actor_photo) }}" alt="" class="person-avatar">
+            {% else %}
+            <span class="group-avatar" aria-hidden="true">N</span>
+            {% endif %}
+            <span>
+                <strong>{{ notification.actor_nickname or 'Someone' }}</strong> {{ notification_text }}
+                {% if notification.actor_username %}<small>@{{ notification.actor_username }}</small>{% endif %}
+            </span>
+            <time>{{ notification.created_at }}</time>
+        </a>
+        {% else %}
+        <div class="empty-state">You're all caught up.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

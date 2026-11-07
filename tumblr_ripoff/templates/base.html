@@ -3,19 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ title or "blog" }}</title>
+    <title>{{ title or "random peoples blogs" }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="page-shell">
         <header class="topbar">
             <div class="brand-wrap">
-                <a href="{{ url_for('home') }}" class="brand">blog</a>
+                <a href="{{ url_for('home') }}" class="brand">RPB</a>
             </div>
 
             {% if current_user %}
             <nav class="main-nav">
                 <a href="{{ url_for('home') }}">Home</a>
+                <a href="{{ url_for('people') }}">People</a>
+                <a href="{{ url_for('friends') }}">Friends</a>
+                <a href="{{ url_for('friend_requests') }}"
+                   aria-label="Friend Requests{% if friend_request_count %}, {{ friend_request_count }} pending{% endif %}">
+                    Friend Requests
+                    {% if friend_request_count %}<span class="notification-badge">{{ friend_request_count }}</span>{% endif %}
+                </a>
+                <a href="{{ url_for('message_inbox') }}"
+                   aria-label="Messages{% if unread_message_count %}, {{ unread_message_count }} unread{% endif %}">
+                    Messages
+                    {% if unread_message_count %}<span class="notification-badge">{{ unread_message_count }}</span>{% endif %}
+                </a>
+                <a href="{{ url_for('notifications') }}"
+                   aria-label="Notifications{% if notification_count %}, {{ notification_count }} unread{% endif %}">
+                    Notifications
+                    {% if notification_count %}<span class="notification-badge">{{ notification_count }}</span>{% endif %}
+                </a>
                 <a href="{{ url_for('my_posts') }}">My Posts</a>
                 <a href="{{ url_for('profile') }}">Profile</a>
                 <a href="{{ url_for('settings') }}">Settings</a>

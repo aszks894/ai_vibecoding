@@ -5,6 +5,10 @@
         <img src="{{ url_for('static', filename=current_user.profile_photo or 'default_avatar.svg') }}" alt="Profile photo" class="profile-avatar">
         <h1>{{ current_user.nickname }}</h1>
         <p>@{{ current_user.username }}</p>
+        <div class="profile-stats">
+            <a href="{{ url_for('profile_followers') }}"><strong>{{ follower_count|default(0) }}</strong> Followers</a>
+            <a href="{{ url_for('profile_following') }}"><strong>{{ following_count|default(0) }}</strong> Following</a>
+        </div>
     </div>
 
     <form method="POST" enctype="multipart/form-data" class="stack-form profile-form">

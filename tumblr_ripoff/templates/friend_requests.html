@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header">
+        <h1>Friend Requests</h1>
+        <p>Accept a request to follow each other and become friends.</p>
+    </header>
+
+    <section class="social-section">
+        <h2>Received</h2>
+        <div class="people-list">
+            {% for person in incoming %}
+            <article class="person-card">
+                <a class="person-info" href="{{ url_for('user_profile', username=person.username) }}">
+                    <img src="{{ url_for('static', filename=person.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                    <span><strong>{{ person.nickname }}</strong><small>@{{ person.username }}</small></span>
+                </a>
+                <div class="person-actions">
+                    <form method="POST" action="{{ url_for('respond_friend_request', requester_id=person.id) }}">
+                        <button class="small-button" type="submit" name="decision" value="accept">Accept</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('respond_friend_request', requester_id=person.id) }}">
+                        <button class="small-button secondary-button" type="submit" name="decision" value="decline">Decline</button>
+                    </form>
+                </div>
+            </article>
+            {% else %}
+            <div class="empty-state">No friend requests right now.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="social-section">
+        <h2>Sent</h2>
+        <div class="people-list">
+            {% for person in outgoing %}
+            <article class="person-card">
+                <a class="person-info" href="{{ url_for('user_profile', username=person.username) }}">
+                    <img src="{{ url_for('static', filename=person.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                    <span><strong>{{ person.nickname }}</strong><small>@{{ person.username }}</small></span>
+                </a>
+                <form method="POST" action="{{ url_for('send_friend_request', target_id=person.id) }}">
+                    <button class="small-button secondary-button" type="submit">Cancel request</button>
+                </form>
+            </article>
+            {% else %}
+            <div class="empty-state">No sent requests.</div>
+            {% endfor %}
+        </div>
+    </section>
+</section>
+{% endblock %}

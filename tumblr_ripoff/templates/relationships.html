@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header">
+        <h1>{{ heading }}</h1>
+        <p><a href="{{ url_for('profile') }}">Back to your profile</a></p>
+    </header>
+    <div class="people-list">
+        {% for person in people %}
+        <article class="person-card">
+            <a class="person-info" href="{{ url_for('user_profile', username=person.username) }}">
+                <img src="{{ url_for('static', filename=person.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                <span><strong>{{ person.nickname }}</strong><small>@{{ person.username }}</small></span>
+            </a>
+            <a class="small-button secondary-button" href="{{ url_for('conversation', target_id=person.id) }}">Message</a>
+        </article>
+        {% else %}
+        <div class="empty-state">No {{ heading|lower }} yet.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

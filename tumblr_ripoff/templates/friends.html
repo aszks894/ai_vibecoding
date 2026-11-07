@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header">
+        <h1>Friends</h1>
+        <p>Your mutual follows and their posts.</p>
+    </header>
+
+    <div class="friend-feed-list">
+        {% for friend in friends %}
+        <section class="friend-feed">
+            <header class="friend-feed-header">
+                <a class="person-info" href="{{ url_for('user_profile', username=friend.username) }}">
+                    <img src="{{ url_for('static', filename=friend.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                    <span><strong>{{ friend.nickname }}</strong><small>@{{ friend.username }}</small></span>
+                </a>
+                <a class="small-button secondary-button" href="{{ url_for('conversation', target_id=friend.id) }}">Message</a>
+            </header>
+            <div class="friend-posts">
+                {% for post in friend.posts %}
+                    {% include "_post_card.html" %}
+                {% else %}
+                <div class="empty-state friend-empty">No posts yet.</div>
+                {% endfor %}
+            </div>
+        </section>
+        {% else %}
+        <div class="empty-state">
+            <h3>No friends yet</h3>
+            <p>When you and another account follow each other, they will show up here.</p>
+            <a class="small-button" href="{{ url_for('people') }}">Find people</a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

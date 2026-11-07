@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="social-page">
+    <header class="directory-header">
+        <h1>New group chat</h1>
+        <p>Choose at least two of your friends to start a group conversation.</p>
+    </header>
+    <form method="POST" class="group-create-form">
+        <label class="group-name-field" for="group-name">Group name</label>
+        <input id="group-name" type="text" name="name" maxlength="80" required placeholder="Name this group">
+        <fieldset class="group-member-picker">
+            <legend>Choose friends</legend>
+            {% for friend in friends %}
+            <label class="group-member-option">
+                <input type="checkbox" name="members" value="{{ friend.id }}">
+                <img src="{{ url_for('static', filename=friend.profile_photo or 'default_avatar.svg') }}" alt="" class="person-avatar">
+                <span><strong>{{ friend.nickname }}</strong><small>@{{ friend.username }}</small></span>
+            </label>
+            {% else %}
+            <p>You need at least two friends before you can create a group chat.</p>
+            {% endfor %}
+        </fieldset>
+        {% if friends %}
+        <button class="primary-btn" type="submit">Create group</button>
+        {% endif %}
+    </form>
+</section>
+{% endblock %}

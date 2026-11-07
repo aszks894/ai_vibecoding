@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="public-profile">
+    {% if blocked_viewer %}
+    <div class="empty-state">
+        <h1>Profile unavailable</h1>
+        <p>This account has blocked you.</p>
+    </div>
+    {% else %}
+    <header class="public-profile-header">
+        <img src="{{ url_for('static', filename=viewed_user.profile_photo or 'default_avatar.svg') }}" alt="" class="public-avatar">
+        <div class="public-profile-details">
+            <h1>{{ viewed_user.nickname }}</h1>
+            <p>@{{ viewed_user.username }}</p>
+            <div class="profile-stats">
+                <span><strong>{{ viewed_user.follower_count }}</strong> followers</span>
+                <span><strong>{{ viewed_user.following_count }}</strong> following</span>
+                {% if viewed_user.is_private %}<span>Private account</span>{% endif %}
+            </div>
+            <div class="profile-actions">
+                {% if blocked_by_viewer %}
+                <form method="POST" action="{{ url_for('toggle_block', target_id=viewed_user.id) }}">
+                    <button class="small-button secondary-button" type="submit">Unblock</button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('toggle_follow', target_id=viewed_user.id) }}">
+                    <button class="small-button" type="submit">
+                        {{ 'Following' if viewed_user.is_following else 'Follow' }}
+                    </button>
+                </form>
+                {% if viewed_user.is_friend %}<span class="friend-status">Friends</span>{% endif %}
+                {% if viewed_user.request_sent %}
+                <form method="POST" action="{{ url_for('send_friend_request', target_id=viewed_user.id) }}">
+                    <button class="small-button secondary-button" type="submit">Cancel request</button>
+                </form>
+                {% elif viewed_user.request_received %}
+                <a class="small-button secondary-button" href="{{ url_for('friend_requests') }}">Review request</a>
+                {% elif not viewed_user.is_friend %}
+                <form method="POST" action="{{ url_for('send_friend_request', target_id=viewed_user.id) }}">
+                    <button class="small-button secondary-button" type="submit">Friend request</button>
+                </form>
+                {% endif %}
+                {% if can_message %}
+                <a class="small-button secondary-button" href="{{ url_for('conversation', target_id=viewed_user.id) }}">Message</a>
+                {% elif viewed_user.is_private %}
+                <span class="blocked-label">Friends only can message</span>
+                {% endif %}
+                <form method="POST" action="{{ url_for('toggle_block', target_id=viewed_user.id) }}" onsubmit="return confirm('Block @{{ viewed_user.username }}? Their posts and profile will be hidden from you, and you will be unfollowed.');">
+                    <button class="small-button secondary-button" type="submit">Block</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    {% if blocked_by_viewer %}
+    <div class="empty-state"><p>You blocked this account. Unblock them to view their posts.</p></div>
+    {% elif not can_view_posts %}
+    <div class="empty-state">
+        <h2>This account is private</h2>
+        <p>Posts are visible to friends who follow each other.</p>
+        {% if viewed_user.is_following %}
+        <p>They need to add you back before you can see their posts.</p>
+        {% else %}
+        <p>Follow them; their posts will appear here if they follow you back.</p>
+        {% endif %}
+    </div>
+    {% else %}
+    <section class="feed-column public-posts">
+        {% for post in posts %}
+        {% include "_post_card.html" %}
+        {% else %}
+        <div class="empty-state">No posts yet.</div>
+        {% endfor %}
+    </section>
+    {% endif %}
+    {% endif %}
+</section>
+{% endblock %}
